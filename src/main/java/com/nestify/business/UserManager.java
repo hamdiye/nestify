@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nestify.dataAccess.UserRepository;
-import com.nestify.dataTransferObject.request.UserSaveRequestDto;
-import com.nestify.dataTransferObject.request.UserUpdateRequestDto;
+import com.nestify.dataTransferObject.request.SaveUserRequestDto;
+import com.nestify.dataTransferObject.request.UpdateUserRequestDto;
 import com.nestify.dataTransferObject.response.GetAllUserResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
 import com.nestify.dataTransferObject.response.GetUserByIdResponseDto;
@@ -55,7 +55,7 @@ public class UserManager implements UserService {
 	}
 
 	@Override
-	public GetUserByIdResponseDto saveUser(UserSaveRequestDto userDto) {
+	public GetUserByIdResponseDto saveUser(SaveUserRequestDto userDto) {
 		User user = new User();
 		user.setName(userDto.getName());
 		user.setEmail(userDto.getEmail());
@@ -65,7 +65,7 @@ public class UserManager implements UserService {
 	}
 
 	@Override
-	public GetUserByIdResponseDto updateUser(Long id, UserUpdateRequestDto userUpdateData) {
+	public GetUserByIdResponseDto updateUser(Long id, UpdateUserRequestDto userUpdateData) {
 		User user = userRepository.findById(id)
 					.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
 		user.setName(userUpdateData.getName());

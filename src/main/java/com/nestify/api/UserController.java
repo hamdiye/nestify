@@ -14,24 +14,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nestify.business.UserService;
-import com.nestify.dataTransferObject.request.UserSaveRequestDto;
-import com.nestify.dataTransferObject.request.UserUpdateRequestDto;
+import com.nestify.dataTransferObject.request.SaveUserRequestDto;
+import com.nestify.dataTransferObject.request.UpdateUserRequestDto;
 import com.nestify.dataTransferObject.response.GetAllUserResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
 import com.nestify.dataTransferObject.response.GetUserByIdResponseDto;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@AllArgsConstructor
 public class UserController {
 
 	private UserService userService;
 	
-	
-	public UserController(UserService userService) {
-		this.userService = userService;
-	}
 
 	@GetMapping
 	public ResponseEntity<Page<GetAllUserResponseDto>> getUsers(@PathVariable @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "asc") String sortDirection, @RequestParam(defaultValue = "10") Integer size, @RequestParam(defaultValue = "id") String sortBy ){
@@ -50,13 +48,13 @@ public class UserController {
 	}
 	
 	@PostMapping("/add")
-	public GetUserByIdResponseDto addUser(@Valid @RequestBody UserSaveRequestDto userSaveRequestDto) {
+	public GetUserByIdResponseDto addUser(@Valid @RequestBody SaveUserRequestDto userSaveRequestDto) {
 		System.out.println(userSaveRequestDto.getName());
 		return userService.saveUser(userSaveRequestDto);
 	}
 	
 	@PutMapping("/update/{id}")
-	public GetUserByIdResponseDto updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) {
+	public GetUserByIdResponseDto updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequestDto userUpdateRequestDto) {
 		return userService.updateUser(id, userUpdateRequestDto);
 	}
 	

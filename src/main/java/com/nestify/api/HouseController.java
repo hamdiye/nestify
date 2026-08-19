@@ -11,30 +11,34 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nestify.business.EventCategoryService;
+import com.nestify.business.EventService;
 import com.nestify.business.HouseService;
 import com.nestify.dataTransferObject.request.AddUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.ChangeMemberRoleRequestDto;
-import com.nestify.dataTransferObject.request.HouseSaveRequestDto;
-import com.nestify.dataTransferObject.request.HouseUpdateRequestDto;
 import com.nestify.dataTransferObject.request.RemoveUserToHouseRequestDto;
+import com.nestify.dataTransferObject.request.SaveHouseRequestDto;
+import com.nestify.dataTransferObject.request.UpdateHouseRequestDto;
 import com.nestify.dataTransferObject.response.GetAllHouseResponseDto;
+import com.nestify.dataTransferObject.response.GetEventByIdResponseDto;
+import com.nestify.dataTransferObject.response.GetEventCategoryResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
 import com.nestify.dataTransferObject.response.UserSummaryForHouseDto;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/houses")
+@AllArgsConstructor
 public class HouseController {
 	private HouseService houseService;
-	
-	
-	public HouseController(HouseService houseService) {
-		this.houseService = houseService;
-	}
+	private EventCategoryService eventCategoryService;
+	private EventService eventService;
+
 	
 	@PostMapping("/add")
-	public GetHouseByIdResponseDto addHouse(@Valid @RequestBody HouseSaveRequestDto houseDto) {
+	public GetHouseByIdResponseDto addHouse(@Valid @RequestBody SaveHouseRequestDto houseDto) {
 		return houseService.addHouse(houseDto);
 	}
 	
@@ -49,7 +53,7 @@ public class HouseController {
 	}
 	
 	@PutMapping("/update/{id}")
-	public GetHouseByIdResponseDto updateHouse(@PathVariable Long id, @Valid @RequestBody HouseUpdateRequestDto houseDto) {
+	public GetHouseByIdResponseDto updateHouse(@PathVariable Long id, @Valid @RequestBody UpdateHouseRequestDto houseDto) {
 		return houseService.updateHouse(id, houseDto);
 	}
 	
@@ -78,6 +82,14 @@ public class HouseController {
 		return houseService.changeMemberRole(houseId, userId, changeMemberRoleDto, actingUserId);
 	}
 	
+	@GetMapping("/{houseId}/event-categories")
+	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(@PathVariable Long houseId, @RequestHeader("X-Acting-User-Id") Long actingUserId){
+		return eventCategoryService.getAllEventCategoryFromHouse(houseId, actingUserId);
+	}
 	
+	@GetMapping("/{houseId}/events")
+	public List<GetEventByIdResponseDto> getEventsFromHouse(@PathVariable Long houseId, @RequestHeader("X-Acting-User-Id") Long actingUserId){
+		return eventService.getEventsFromHouse(houseId, actingUserId);
+	}
 	
 }

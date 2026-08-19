@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nestify.dataAccess.HouseRepository;
 import com.nestify.dataTransferObject.request.AddUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.ChangeMemberRoleRequestDto;
-import com.nestify.dataTransferObject.request.HouseSaveRequestDto;
-import com.nestify.dataTransferObject.request.HouseUpdateRequestDto;
+import com.nestify.dataTransferObject.request.SaveHouseRequestDto;
+import com.nestify.dataTransferObject.request.UpdateHouseRequestDto;
 import com.nestify.dataTransferObject.request.RemoveUserToHouseRequestDto;
 import com.nestify.dataTransferObject.response.GetAllHouseResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
@@ -43,7 +43,7 @@ public class HouseManager implements HouseService{
 	
 
 	@Override
-	public GetHouseByIdResponseDto addHouse(HouseSaveRequestDto houseDto) {
+	public GetHouseByIdResponseDto addHouse(SaveHouseRequestDto houseDto) {
 		User user = userHelper.getUserOrThrow(houseDto.getUserId());
 		
 		House house = new House();
@@ -64,7 +64,7 @@ public class HouseManager implements HouseService{
 	public List<GetAllHouseResponseDto> getHouses() {
 		List<House> houses = houseRepository.findAll();
 		List<GetAllHouseResponseDto> houseDtos = houses.stream()
-				.map(house -> houseMapper.toGetAllHouseResponseDto(house)).toList();
+													   .map(house -> houseMapper.toGetAllHouseResponseDto(house)).toList();
 		return houseDtos;
 	}
 
@@ -75,7 +75,7 @@ public class HouseManager implements HouseService{
 	}
 
 	@Override
-	public GetHouseByIdResponseDto updateHouse(Long id, HouseUpdateRequestDto houseDto) {
+	public GetHouseByIdResponseDto updateHouse(Long id, UpdateHouseRequestDto houseDto) {
 		User user = userHelper.getUserOrThrow(houseDto.getUserId());
 		
 		House house = houseHelper.getHouseOrThrow(id);		

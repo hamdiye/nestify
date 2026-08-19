@@ -1,0 +1,83 @@
+package com.nestify.business;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.nestify.dataAccess.EventCategoryRepository;
+import com.nestify.dataTransferObject.request.DeleteEventCategoryRequestDto;
+import com.nestify.dataTransferObject.request.SaveEventCategoryRequestDto;
+import com.nestify.dataTransferObject.request.UpdateEventCategoryRequestDto;
+import com.nestify.dataTransferObject.response.GetEventCategoryResponseDto;
+import com.nestify.entities.EventCategory;
+import com.nestify.entities.House;
+import com.nestify.helpers.EventCategoryServiceHelper;
+import com.nestify.helpers.HouseServiceHelper;
+import com.nestify.mapper.EventCategoryMapper;
+import com.nestify.policies.EventCategoryPolicy;
+
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class EventCategoryManager implements EventCategoryService{
+	private EventCategoryRepository eventCategoryRepository;
+	private EventCategoryPolicy eventCategoryPolicy;
+	private HouseServiceHelper houseHelper;
+	private EventCategoryMapper eventCategoryMapper;
+	private EventCategoryServiceHelper eventCategoryHelper;
+	
+	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(Long houseId, Long actingUserId){
+		House house = houseHelper.getHouseOrThrow(houseId);
+		eventCategoryPolicy.validateEventCategory(house, actingUserId);
+		List<GetEventCategoryResponseDto> eventCategories = house.getEventCategories()
+																 .stream()
+																 .map(eventCategory -> eventCategoryMapper.toGetEventCategoryResponseDto(eventCategory))
+																 .toList();
+		return eventCategories;
+	}
+	
+	@Override
+	public GetEventCategoryResponseDto addEventCategory(SaveEventCategoryRequestDto eventCategoryDto) {
+		House house = houseHelper.getHouseOrThrow(eventCategoryDto.getHouse_id());
+		
+		eventCategoryPolicy.validateEventCategory(house, eventCategoryDto.getUser_id());
+		
+		EventCategory eventCategory = new EventCategory();
+		eventCategory.setTitle(eventCategoryDto.getTitle());
+		eventCategory.setDescription(eventCategoryDto.getDescription());
+		eventCategory.setColorCode(eventCategoryDto.getColorCode());
+		eventCategory.setHouse(house);
+		
+		EventCategory savedEventCategory = eventCategoryRepository.save(eventCategory);
+		
+		
+		return eventCategoryMapper.toGetEventCategoryResponseDto(savedEventCategory);
+	}
+
+	@Override
+	public GetEventCategoryResponseDto updateEventCategory(Long eventCategoryId, UpdateEventCategoryRequestDto updateCategoryDto) {
+		House house = houseHelper.getHouseOrThrow(updateCategoryDto.getHouse_id());
+		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(eventCategoryId);
+
+		eventCategoryPolicy.validateEventCategory(house, updateCategoryDto.getUser_id());
+		
+		eventCategory.setTitle(updateCategoryDto.getTitle());
+		eventCategory.setDescription(updateCategoryDto.getDescription());
+		eventCategory.setColorCode(updateCategoryDto.getColorCode());
+		eventCategory.setHouse(house);
+		
+		EventCategory savedEventCategory = eventCategoryRepository.save(eventCategory);
+		
+		return eventCategoryMapper.toGetEventCategoryResponseDto(savedEventCategory);
+	}
+
+	@Override
+	public void deleteEventCategory(DeleteEventCategoryRequestDto deleteEventDto) {
+		House house = houseHelper.getHouseOrThrow(deleteEventDto.getHouseId());
+		eventCategoryPolicy.validateEventCategory(house, deleteEventDto.getActingUserId());
+		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(deleteEventDto.getCategoryId());
+		eventCategoryRepository.delete(eventCategory);
+	}
+	
+}

@@ -9,7 +9,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HouseSaveRequestDto {
+public class SaveHouseRequestDto {
 	private Long userId;
 	private String title;
 	private String address;

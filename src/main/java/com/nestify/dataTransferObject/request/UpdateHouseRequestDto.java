@@ -10,7 +10,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HouseUpdateRequestDto {
+public class UpdateHouseRequestDto {
 	private Long userId;
 	private String title;
 	private String address;

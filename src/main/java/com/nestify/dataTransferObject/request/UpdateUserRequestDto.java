@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserUpdateRequestDto {
+public class UpdateUserRequestDto {
 	
 	@NotBlank(message = "İsim alanı boş bırakılamaz.")
 	@Size(min = 2, max = 50, message = "İsim 2 ile 50 karakter arasında olmalıdır.")
