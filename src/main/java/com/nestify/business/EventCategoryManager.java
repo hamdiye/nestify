@@ -39,9 +39,9 @@ public class EventCategoryManager implements EventCategoryService{
 	
 	@Override
 	public GetEventCategoryResponseDto addEventCategory(SaveEventCategoryRequestDto eventCategoryDto) {
-		House house = houseHelper.getHouseOrThrow(eventCategoryDto.getHouse_id());
+		House house = houseHelper.getHouseOrThrow(eventCategoryDto.getHouseId());
 		
-		eventCategoryPolicy.validateEventCategory(house, eventCategoryDto.getUser_id());
+		eventCategoryPolicy.validateEventCategory(house, eventCategoryDto.getUserId());
 		
 		EventCategory eventCategory = new EventCategory();
 		eventCategory.setTitle(eventCategoryDto.getTitle());
@@ -56,11 +56,11 @@ public class EventCategoryManager implements EventCategoryService{
 	}
 
 	@Override
-	public GetEventCategoryResponseDto updateEventCategory(Long eventCategoryId, UpdateEventCategoryRequestDto updateCategoryDto) {
-		House house = houseHelper.getHouseOrThrow(updateCategoryDto.getHouse_id());
-		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(eventCategoryId);
+	public GetEventCategoryResponseDto updateEventCategory(UpdateEventCategoryRequestDto updateCategoryDto) {
+		House house = houseHelper.getHouseOrThrow(updateCategoryDto.getHouseId());
+		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(updateCategoryDto.getEventCategoryId());
 
-		eventCategoryPolicy.validateEventCategory(house, updateCategoryDto.getUser_id());
+		eventCategoryPolicy.validateEventCategory(house, updateCategoryDto.getUserId());
 		
 		eventCategory.setTitle(updateCategoryDto.getTitle());
 		eventCategory.setDescription(updateCategoryDto.getDescription());

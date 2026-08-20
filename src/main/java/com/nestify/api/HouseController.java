@@ -2,6 +2,7 @@ package com.nestify.api;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nestify.business.EventCategoryService;
 import com.nestify.business.EventService;
+import com.nestify.business.HouseNeedService;
 import com.nestify.business.HouseService;
 import com.nestify.dataTransferObject.request.AddUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.ChangeMemberRoleRequestDto;
@@ -23,6 +25,7 @@ import com.nestify.dataTransferObject.response.GetAllHouseResponseDto;
 import com.nestify.dataTransferObject.response.GetEventByIdResponseDto;
 import com.nestify.dataTransferObject.response.GetEventCategoryResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
+import com.nestify.dataTransferObject.response.GetHouseNeedByIdResponseDto;
 import com.nestify.dataTransferObject.response.UserSummaryForHouseDto;
 
 import jakarta.validation.Valid;
@@ -35,6 +38,7 @@ public class HouseController {
 	private HouseService houseService;
 	private EventCategoryService eventCategoryService;
 	private EventService eventService;
+	private HouseNeedService houseNeedService;
 
 	
 	@PostMapping("/add")
@@ -57,7 +61,7 @@ public class HouseController {
 		return houseService.updateHouse(id, houseDto);
 	}
 	
-	@PutMapping("/delete/{id}")
+	@DeleteMapping("/delete/{id}")
 	public void deleteHouse(@PathVariable Long id) {
 		houseService.deleteHouse(id);
 	}
@@ -90,6 +94,11 @@ public class HouseController {
 	@GetMapping("/{houseId}/events")
 	public List<GetEventByIdResponseDto> getEventsFromHouse(@PathVariable Long houseId, @RequestHeader("X-Acting-User-Id") Long actingUserId){
 		return eventService.getEventsFromHouse(houseId, actingUserId);
+	}
+	
+	@GetMapping("/{houseId}/house-needs")
+	public List<GetHouseNeedByIdResponseDto> getHouseNeedsFromHouse(@PathVariable Long houseId, @RequestHeader("X-Acting-User-Id") Long actingUserId){
+		return houseNeedService.getHouseNeedsFromHouse(houseId, actingUserId);
 	}
 	
 }

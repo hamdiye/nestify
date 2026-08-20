@@ -9,11 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateEventCategoryRequestDto {
-	private Long eventCategoryId;
+public class DeleteHouseNeedRequestDto {
+	private Long houseNeedId;
 	private Long userId;
 	private Long houseId;
-	private String title;
-	private String description;
-	private String colorCode;
 }

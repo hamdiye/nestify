@@ -55,6 +55,8 @@ public class House {
 	private Set<EventCategory> eventCategories = new HashSet<>();
 	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Event> events = new HashSet<>();
+	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<HouseNeed> houseNeeds = new HashSet<>();
 	@PrePersist
 	protected void onCreate() {
 		this.createdAt = LocalDateTime.now();

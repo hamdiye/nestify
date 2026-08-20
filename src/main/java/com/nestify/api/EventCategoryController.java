@@ -1,8 +1,7 @@
 package com.nestify.api;
 
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,11 +25,11 @@ public class EventCategoryController {
 	public GetEventCategoryResponseDto addEventCategory(@Valid @RequestBody SaveEventCategoryRequestDto eventCategoryDto) {
 		return eventCategoryService.addEventCategory(eventCategoryDto);
 	}
-	@PostMapping("/update/{eventCategoryId}")
-	public GetEventCategoryResponseDto updateEventCategory(@PathVariable Long eventCategoryId, @Valid @RequestBody UpdateEventCategoryRequestDto eventCategoryDto) {
-		return eventCategoryService.updateEventCategory(eventCategoryId, eventCategoryDto);
+	@PostMapping("/update")
+	public GetEventCategoryResponseDto updateEventCategory(@Valid @RequestBody UpdateEventCategoryRequestDto eventCategoryDto) {
+		return eventCategoryService.updateEventCategory(eventCategoryDto);
 	}
-	@PutMapping("/delete/{eventCategoryId}")
+	@DeleteMapping("/delete")
 	public void deleteEventCategory(DeleteEventCategoryRequestDto deleteEventCategory) {
 		eventCategoryService.deleteEventCategory(deleteEventCategory);
 	}

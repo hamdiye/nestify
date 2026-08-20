@@ -10,8 +10,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SaveEventCategoryRequestDto {
-	private Long user_id;
-	private Long house_id;
+	private Long userId;
+	private Long houseId;
 	private String title;
 	private String description;
 	private String colorCode;

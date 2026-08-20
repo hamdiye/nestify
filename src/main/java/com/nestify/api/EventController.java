@@ -1,5 +1,6 @@
 package com.nestify.api;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +32,7 @@ public class EventController {
 		return eventService.updateEvent(eventId, eventRequestDto);
 	};
 	
-	@PostMapping("/delete")
+	@DeleteMapping("/delete")
 	public void deleteEvent(@Valid @RequestBody DeleteEventRequestDto eventRequestDto) {
 		eventService.deleteEvent(eventRequestDto);
 	};

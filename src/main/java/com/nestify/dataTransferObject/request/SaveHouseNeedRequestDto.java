@@ -1,5 +1,7 @@
 package com.nestify.dataTransferObject.request;
 
+import com.nestify.entities.enums.NeedStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,11 +11,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateEventCategoryRequestDto {
-	private Long eventCategoryId;
-	private Long userId;
-	private Long houseId;
+public class SaveHouseNeedRequestDto {
 	private String title;
 	private String description;
-	private String colorCode;
+    private Long createdBy_id;
+    private Long house_id;
+    private NeedStatus status;
 }
