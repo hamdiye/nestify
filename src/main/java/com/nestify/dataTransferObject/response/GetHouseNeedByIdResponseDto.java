@@ -15,7 +15,7 @@ public class GetHouseNeedByIdResponseDto {
 	private Long id;
 	private String title;
 	private String description;
-    private Long createdBy_id;
-    private Long house_id;
+    private Long createdById;
+    private Long houseId;
     private NeedStatus status;
 }

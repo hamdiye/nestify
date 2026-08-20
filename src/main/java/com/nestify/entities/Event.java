@@ -17,34 +17,34 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="events")
+@Table(name = "events")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Event {
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column(name="title")
+	@Column(name = "title")
 	private String title;
-	@Column(name="desription")
+	@Column(name = "description")
 	private String description;
-	@Column(name="started_date")
+	@Column(name = "started_date")
 	private LocalDateTime startedDate;
-	@Column(name="end_date")
+	@Column(name = "end_date")
 	private LocalDateTime endDate;
 	@Column(nullable = false)
-    private Boolean isAllDay = false;
-	@Column(name="location")
+	private Boolean isAllDay = false;
+	@Column(name = "location")
 	private String location;
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_category_id")
+	@JoinColumn(name = "event_category_id")
 	private EventCategory eventCategory;
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "house_id", nullable = false)
-    private House house;
+	@JoinColumn(name = "house_id", nullable = false)
+	private House house;
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_user_id")
-    private User assignedUser;
+	@JoinColumn(name = "assigned_user_id")
+	private User assignedUser;
 }

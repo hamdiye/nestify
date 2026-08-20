@@ -23,12 +23,12 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class HouseNeedManager implements HouseNeedService {
-	private HouseNeedRepository houseNeedRepository;
-	private UserServiceHelper userServiceHelper;
-	private HouseServiceHelper houseServiceHelper;
-	private HouseNeedServiceHelper houseNeedServiceHelper;
-	private HouseNeedMapper houseNeedMapper;
-	private HouseNeedPolicy houseNeedPolicy;
+	private final HouseNeedRepository houseNeedRepository;
+	private final UserServiceHelper userServiceHelper;
+	private final HouseServiceHelper houseServiceHelper;
+	private final HouseNeedServiceHelper houseNeedServiceHelper;
+	private final HouseNeedMapper houseNeedMapper;
+	private final HouseNeedPolicy houseNeedPolicy;
 	@Override
 	public List<GetHouseNeedByIdResponseDto> getHouseNeedsFromHouse(Long houseId, Long userId) {
 		House house = houseServiceHelper.getHouseOrThrow(houseId);
@@ -43,8 +43,8 @@ public class HouseNeedManager implements HouseNeedService {
 
 	@Override
 	public GetHouseNeedByIdResponseDto addHouseNeed(SaveHouseNeedRequestDto houseNeedRequest) {
-		User user = userServiceHelper.getUserOrThrow(houseNeedRequest.getCreatedBy_id());
-		House house = houseServiceHelper.getHouseOrThrow(houseNeedRequest.getHouse_id());
+		User user = userServiceHelper.getUserOrThrow(houseNeedRequest.getCreatedById());
+		House house = houseServiceHelper.getHouseOrThrow(houseNeedRequest.getHouseId());
 		
 		houseNeedPolicy.validateHouseNeedOperation(house, user.getId());
 		

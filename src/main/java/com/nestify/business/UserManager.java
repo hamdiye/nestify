@@ -25,32 +25,30 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class UserManager implements UserService {
-	
-	private UserRepository userRepository;
-	private UserMapper userMapper;
-	private HouseMapper houseMapper;
+
+	private final UserRepository userRepository;
+	private final UserMapper userMapper;
+	private final HouseMapper houseMapper;
 
 	@Override
 	public Page<GetAllUserResponseDto> getUsers(Integer page, String sortDirection, Integer size, String sortBy) {
-		
-		Sort sort = sortDirection.equalsIgnoreCase("desc") ? 
-							Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-		
-		
+
+		Sort sort = sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+
 		Pageable paginationFilter = PageRequest.of(page, size, sort);
-		
+
 		Page<User> userPage = userRepository.findAll(paginationFilter);
-		
+
 		Page<GetAllUserResponseDto> responsePage = userPage.map(user -> userMapper.toGetAllUserResponseDto(user));
-		
+
 		return responsePage;
 	}
 
 	@Override
 	public GetUserByIdResponseDto getUserById(Long id) {
 		User user = userRepository.findById(id)
-	            .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
-		
+				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+
 		return userMapper.toGetUserByIdResponseDto(user);
 	}
 
@@ -67,13 +65,13 @@ public class UserManager implements UserService {
 	@Override
 	public GetUserByIdResponseDto updateUser(Long id, UpdateUserRequestDto userUpdateData) {
 		User user = userRepository.findById(id)
-					.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
 		user.setName(userUpdateData.getName());
 		user.setEmail(userUpdateData.getEmail());
 		user.setPassword(userUpdateData.getPassword());
-		
+
 		User savedUser = userRepository.save(user);
-		
+
 		return userMapper.toGetUserByIdResponseDto(savedUser);
 	}
 
@@ -83,19 +81,19 @@ public class UserManager implements UserService {
 				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
 		userRepository.delete(user);
 	}
-	
+
 	@Override
 	@Transactional(readOnly = true)
 	public List<GetHouseByIdResponseDto> getHousesOfUser(Long userId) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + userId));
 		List<GetHouseByIdResponseDto> houses = user.getHouseMemberships()
-													 .stream()
-													 .map(houseMember -> {
-														 House house = houseMember.getHouse();
-														 return houseMapper.toGetHouseByIdResponseDto(house);
-							
-													  }).toList();
+				.stream()
+				.map(houseMember -> {
+					House house = houseMember.getHouse();
+					return houseMapper.toGetHouseByIdResponseDto(house);
+
+				}).toList();
 
 		return houses;
 	}

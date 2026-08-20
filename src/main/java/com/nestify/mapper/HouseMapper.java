@@ -8,37 +8,35 @@ import com.nestify.entities.House;
 
 @Component
 public class HouseMapper {
-	
-	public GetHouseByIdResponseDto toGetHouseByIdResponseDto(House house) {
-		if (house == null) {
+
+    public GetHouseByIdResponseDto toGetHouseByIdResponseDto(House house) {
+        if (house == null) {
             return null;
         }
-		return new GetHouseByIdResponseDto(
-				house.getId(),
+        return new GetHouseByIdResponseDto(
+                house.getId(),
                 house.getTitle(),
-                house.getCity(),
                 house.getAddress(),
-                house.getInvateCode(),
+                house.getCity(),
+                house.getInviteCode(),
                 house.getCreatedAt(),
                 house.getUpdatedAt(),
-                house.getMembers()
-        );
-	}
-	
-	public GetAllHouseResponseDto toGetAllHouseResponseDto(House house) {
-		if (house == null) {
+                house.getMembers());
+    }
+
+    public GetAllHouseResponseDto toGetAllHouseResponseDto(House house) {
+        if (house == null) {
             return null;
         }
-		return new GetAllHouseResponseDto(
-				house.getId(),
+        return new GetAllHouseResponseDto(
+                house.getId(),
                 house.getTitle(),
-                house.getCity(),
                 house.getAddress(),
-                house.getInvateCode(),
+                house.getCity(),
+                house.getInviteCode(),
                 house.getCreatedAt(),
                 house.getUpdatedAt(),
-                house.getMembers()
-        );
-	}
-	
+                house.getMembers());
+    }
+
 }

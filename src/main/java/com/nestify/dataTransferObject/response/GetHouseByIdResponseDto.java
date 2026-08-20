@@ -22,7 +22,7 @@ public class GetHouseByIdResponseDto {
 	private String title;
 	private String address;
 	private String city;
-	private String invateCode;
+	private String inviteCode;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 	private Set<HouseMember> members;

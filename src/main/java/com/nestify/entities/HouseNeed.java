@@ -19,27 +19,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="house_needs")
+@Table(name = "house_needs")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class HouseNeed {
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column(name="title")
+	@Column(name = "title")
 	private String title;
-	@Column(name="description")
+	@Column(name = "description")
 	private String description;
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+	@JoinColumn(name = "created_by", nullable = false)
+	private User createdBy;
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "house_id", nullable = false)
-    private House house;
+	@JoinColumn(name = "house_id", nullable = false)
+	private House house;
 	@Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NeedStatus status = NeedStatus.PENDING;
-	
+	@Column(nullable = false)
+	private NeedStatus status = NeedStatus.PENDING;
+
 }

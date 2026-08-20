@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class GetEventCategoryResponseDto {
 	private Long id;
-	private Long house_id;
+	private Long houseId;
 	private String title;
 	private String description;
 	private String colorCode;

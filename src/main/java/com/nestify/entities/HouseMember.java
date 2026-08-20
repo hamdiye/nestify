@@ -22,15 +22,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="house_members")
+@Table(name = "house_members")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class HouseMember {
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Long Id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
@@ -38,19 +38,18 @@ public class HouseMember {
 	@JoinColumn(name = "house_id", nullable = false)
 	private House house;
 	@Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+	@Column(nullable = false)
 	private MemberRole memberRole;
 	@Column(name = "joined_at")
-    private LocalDateTime joinedAt;
+	private LocalDateTime joinedAt;
 
-    @PrePersist
-    protected void onJoin() {
-        this.joinedAt = LocalDateTime.now();
-    }
-    
-    public boolean isAdmin() {
-        return this.memberRole == MemberRole.ADMIN;
-    }
+	@PrePersist
+	protected void onJoin() {
+		this.joinedAt = LocalDateTime.now();
+	}
+
+	public boolean isAdmin() {
+		return this.memberRole == MemberRole.ADMIN;
+	}
 
 }
-

@@ -20,55 +20,56 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class EventCategoryManager implements EventCategoryService{
-	private EventCategoryRepository eventCategoryRepository;
-	private EventCategoryPolicy eventCategoryPolicy;
-	private HouseServiceHelper houseHelper;
-	private EventCategoryMapper eventCategoryMapper;
-	private EventCategoryServiceHelper eventCategoryHelper;
-	
-	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(Long houseId, Long actingUserId){
+public class EventCategoryManager implements EventCategoryService {
+	private final EventCategoryRepository eventCategoryRepository;
+	private final EventCategoryPolicy eventCategoryPolicy;
+	private final HouseServiceHelper houseHelper;
+	private final EventCategoryMapper eventCategoryMapper;
+	private final EventCategoryServiceHelper eventCategoryHelper;
+
+	@Override
+	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(Long houseId, Long actingUserId) {
 		House house = houseHelper.getHouseOrThrow(houseId);
 		eventCategoryPolicy.validateEventCategory(house, actingUserId);
 		List<GetEventCategoryResponseDto> eventCategories = house.getEventCategories()
-																 .stream()
-																 .map(eventCategory -> eventCategoryMapper.toGetEventCategoryResponseDto(eventCategory))
-																 .toList();
+				.stream()
+				.map(eventCategory -> eventCategoryMapper.toGetEventCategoryResponseDto(eventCategory))
+				.toList();
 		return eventCategories;
 	}
-	
+
 	@Override
 	public GetEventCategoryResponseDto addEventCategory(SaveEventCategoryRequestDto eventCategoryDto) {
 		House house = houseHelper.getHouseOrThrow(eventCategoryDto.getHouseId());
-		
+
 		eventCategoryPolicy.validateEventCategory(house, eventCategoryDto.getUserId());
-		
+
 		EventCategory eventCategory = new EventCategory();
 		eventCategory.setTitle(eventCategoryDto.getTitle());
 		eventCategory.setDescription(eventCategoryDto.getDescription());
 		eventCategory.setColorCode(eventCategoryDto.getColorCode());
 		eventCategory.setHouse(house);
-		
+
 		EventCategory savedEventCategory = eventCategoryRepository.save(eventCategory);
-		
-		
+
 		return eventCategoryMapper.toGetEventCategoryResponseDto(savedEventCategory);
 	}
 
 	@Override
 	public GetEventCategoryResponseDto updateEventCategory(UpdateEventCategoryRequestDto updateCategoryDto) {
 		House house = houseHelper.getHouseOrThrow(updateCategoryDto.getHouseId());
-		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(updateCategoryDto.getEventCategoryId());
+		EventCategory eventCategory = eventCategoryHelper
+				.getEventCategoryOrThrow(updateCategoryDto.getEventCategoryId());
 
 		eventCategoryPolicy.validateEventCategory(house, updateCategoryDto.getUserId());
-		
+
 		eventCategory.setTitle(updateCategoryDto.getTitle());
 		eventCategory.setDescription(updateCategoryDto.getDescription());
 		eventCategory.setColorCode(updateCategoryDto.getColorCode());
 		eventCategory.setHouse(house);
-		
+
 		EventCategory savedEventCategory = eventCategoryRepository.save(eventCategory);
-		
+
 		return eventCategoryMapper.toGetEventCategoryResponseDto(savedEventCategory);
 	}
 
@@ -79,5 +80,5 @@ public class EventCategoryManager implements EventCategoryService{
 		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(deleteEventDto.getCategoryId());
 		eventCategoryRepository.delete(eventCategory);
 	}
-	
+
 }

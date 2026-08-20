@@ -30,35 +30,36 @@ import lombok.AllArgsConstructor;
 public class UserController {
 
 	private UserService userService;
-	
 
 	@GetMapping
-	public ResponseEntity<Page<GetAllUserResponseDto>> getUsers(@PathVariable @RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "asc") String sortDirection, @RequestParam(defaultValue = "10") Integer size, @RequestParam(defaultValue = "id") String sortBy ){
+	public ResponseEntity<Page<GetAllUserResponseDto>> getUsers(@RequestParam(defaultValue = "0") Integer page,
+			@RequestParam(defaultValue = "asc") String sortDirection, @RequestParam(defaultValue = "10") Integer size,
+			@RequestParam(defaultValue = "id") String sortBy) {
 		Page<GetAllUserResponseDto> users = userService.getUsers(page, sortDirection, size, sortBy);
 		return ResponseEntity.ok(users);
 	}
-	
+
 	@GetMapping("/{id}")
-	public GetUserByIdResponseDto getUser(@PathVariable Long id){
+	public GetUserByIdResponseDto getUser(@PathVariable Long id) {
 		return userService.getUserById(id);
 	}
-	
+
 	@GetMapping("/{id}/houses")
-	public List<GetHouseByIdResponseDto> getHousesOfUser(@PathVariable Long id){
+	public List<GetHouseByIdResponseDto> getHousesOfUser(@PathVariable Long id) {
 		return userService.getHousesOfUser(id);
 	}
-	
+
 	@PostMapping("/add")
 	public GetUserByIdResponseDto addUser(@Valid @RequestBody SaveUserRequestDto userSaveRequestDto) {
-		System.out.println(userSaveRequestDto.getName());
 		return userService.saveUser(userSaveRequestDto);
 	}
-	
+
 	@PutMapping("/update/{id}")
-	public GetUserByIdResponseDto updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequestDto userUpdateRequestDto) {
+	public GetUserByIdResponseDto updateUser(@PathVariable Long id,
+			@Valid @RequestBody UpdateUserRequestDto userUpdateRequestDto) {
 		return userService.updateUser(id, userUpdateRequestDto);
 	}
-	
+
 	@DeleteMapping("/delete/{id}")
 	public void deleteUser(@PathVariable Long id) {
 		userService.deleteUser(id);
