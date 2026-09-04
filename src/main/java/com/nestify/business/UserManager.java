@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import com.nestify.entities.House;
 import com.nestify.entities.User;
 import com.nestify.mapper.HouseMapper;
 import com.nestify.mapper.UserMapper;
+import com.nestify.policies.UserPolicy;
 
 import lombok.AllArgsConstructor;
 
@@ -27,8 +29,10 @@ import lombok.AllArgsConstructor;
 public class UserManager implements UserService {
 
 	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
 	private final HouseMapper houseMapper;
+	private final UserPolicy userPolicy;
 
 	@Override
 	public Page<GetAllUserResponseDto> getUsers(Integer page, String sortDirection, Integer size, String sortBy) {
@@ -46,29 +50,28 @@ public class UserManager implements UserService {
 
 	@Override
 	public GetUserByIdResponseDto getUserById(Long id) {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
 
 		return userMapper.toGetUserByIdResponseDto(user);
 	}
 
 	@Override
 	public GetUserByIdResponseDto saveUser(SaveUserRequestDto userDto) {
+		String encodedPassword = passwordEncoder.encode(userDto.getPassword());
+		userPolicy.validateUserRegister(userDto);
 		User user = new User();
 		user.setName(userDto.getName());
 		user.setEmail(userDto.getEmail());
-		user.setPassword(userDto.getPassword());
+		user.setPassword(encodedPassword);
 		User savedUser = userRepository.save(user);
 		return userMapper.toGetUserByIdResponseDto(savedUser);
 	}
 
 	@Override
 	public GetUserByIdResponseDto updateUser(Long id, UpdateUserRequestDto userUpdateData) {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
 		user.setName(userUpdateData.getName());
 		user.setEmail(userUpdateData.getEmail());
-		user.setPassword(userUpdateData.getPassword());
 
 		User savedUser = userRepository.save(user);
 
@@ -77,8 +80,7 @@ public class UserManager implements UserService {
 
 	@Override
 	public void deleteUser(Long id) {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
 		userRepository.delete(user);
 	}
 
@@ -87,13 +89,11 @@ public class UserManager implements UserService {
 	public List<GetHouseByIdResponseDto> getHousesOfUser(Long userId) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + userId));
-		List<GetHouseByIdResponseDto> houses = user.getHouseMemberships()
-				.stream()
-				.map(houseMember -> {
-					House house = houseMember.getHouse();
-					return houseMapper.toGetHouseByIdResponseDto(house);
+		List<GetHouseByIdResponseDto> houses = user.getHouseMemberships().stream().map(houseMember -> {
+			House house = houseMember.getHouse();
+			return houseMapper.toGetHouseByIdResponseDto(house);
 
-				}).toList();
+		}).toList();
 
 		return houses;
 	}

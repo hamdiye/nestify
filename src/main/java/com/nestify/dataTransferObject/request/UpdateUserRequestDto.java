@@ -21,11 +21,5 @@ public class UpdateUserRequestDto {
 	@NotBlank(message = "E-posta alanı boş bırakılamaz.")
     @Email(message = "Lütfen geçerli bir e-posta adresi giriniz.")
 	private String email;
-	
-	@NotBlank(message = "Şifre boş bırakılamaz.")
-    @Size(min = 6, message = "Şifre en az 6 karakter olmalıdır.")
-	private String password;
-	
-
 
 }

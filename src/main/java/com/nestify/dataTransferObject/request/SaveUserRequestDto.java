@@ -1,5 +1,8 @@
 package com.nestify.dataTransferObject.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,4 +28,16 @@ public class SaveUserRequestDto {
 	@NotBlank(message = "Şifre boş bırakılamaz.")
     @Size(min = 6, message = "Şifre en az 6 karakter olmalıdır.")
 	private String password;
+	
+	@NotBlank(message = "Şifre tekrarı boş bırakılamaz.")
+    private String confirmPassword;
+	
+	@JsonIgnore
+    @AssertTrue(message = "Girdiğiniz şifreler birbiriyle eşleşmiyor.")
+    public boolean isPasswordConfirmed() {
+        if (password == null || confirmPassword == null) {
+            return true; // @NotBlank anotasyonları zaten null/boş kontrolünü yakalar
+        }
+        return password.equals(confirmPassword);
+    }
 }

@@ -38,7 +38,7 @@ public class House {
 	private String address;
 	@Column(name = "city")
 	private String city;
-	@Column(name = "inviteCode", nullable = false, unique = true)
+	@Column(name = "invite_code", nullable = false)
 	private String inviteCode;
 	@Column(name = "createdAt")
 	private LocalDateTime createdAt;

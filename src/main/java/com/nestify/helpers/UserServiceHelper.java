@@ -16,4 +16,13 @@ public class UserServiceHelper {
     	return userRepository.findById(userId)
 				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + userId));
     }
+    
+    public User getUserByEmailOrThrow(String email) {
+    	return userRepository.findByEmail(email)
+				.orElseThrow(() -> new RuntimeException("Email bulunamadı: " + email));
+    }
+    
+    public Boolean emailIsExist(String email) {
+    	return userRepository.findByEmail(email).isPresent();
+    }
 }
