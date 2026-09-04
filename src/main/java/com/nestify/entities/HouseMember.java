@@ -16,13 +16,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "house_members")
+@Table(name = "house_members", uniqueConstraints = {
+	@UniqueConstraint(name = "uk_house_user", columnNames = { "house_id", "user_id" })
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,13 +46,41 @@ public class HouseMember {
 	@Column(name = "joined_at")
 	private LocalDateTime joinedAt;
 
+	/**
+	 * Sets the join timestamp before the membership entity is persisted.
+	 */
 	@PrePersist
 	protected void onJoin() {
 		this.joinedAt = LocalDateTime.now();
 	}
 
+	/**
+	 * Checks whether this member has the ADMIN role.
+	 *
+	 * @return true if member role is ADMIN, false otherwise
+	 */
 	public boolean isAdmin() {
 		return this.memberRole == MemberRole.ADMIN;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		HouseMember that = (HouseMember) o;
+		if (id != null && that.id != null) {
+			return id.equals(that.id);
+		}
+		Long thisHouseId = (house != null) ? house.getId() : null;
+		Long thatHouseId = (that.house != null) ? that.house.getId() : null;
+		Long thisUserId = (user != null) ? user.getId() : null;
+		Long thatUserId = (that.user != null) ? that.user.getId() : null;
+		return java.util.Objects.equals(thisHouseId, thatHouseId) && java.util.Objects.equals(thisUserId, thatUserId);
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
 	}
 
 }

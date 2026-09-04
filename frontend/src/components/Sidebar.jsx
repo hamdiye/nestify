@@ -4,6 +4,7 @@ import { useUser } from '../context/UserContext';
 const navItems = [
   { to: '/dashboard', icon: '🏠', label: 'Dashboard'  },
   { to: '/houses',    icon: '🏘️', label: 'Evler'       },
+  { to: '/calendar',  icon: '📅', label: 'Takvim'      },
   { to: '/profile',   icon: '👤', label: 'Profilim'    },
 ];
 

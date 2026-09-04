@@ -22,16 +22,20 @@ public class EventCategoryController {
 	private EventCategoryService eventCategoryService;
 
 	@PostMapping("/add")
-	public GetEventCategoryResponseDto addEventCategory(@Valid @RequestBody SaveEventCategoryRequestDto eventCategoryDto) {
+	public GetEventCategoryResponseDto addEventCategory(
+			@Valid @RequestBody SaveEventCategoryRequestDto eventCategoryDto) {
 		return eventCategoryService.addEventCategory(eventCategoryDto);
 	}
+
 	@PostMapping("/update")
-	public GetEventCategoryResponseDto updateEventCategory(@Valid @RequestBody UpdateEventCategoryRequestDto eventCategoryDto) {
+	public GetEventCategoryResponseDto updateEventCategory(
+			@Valid @RequestBody UpdateEventCategoryRequestDto eventCategoryDto) {
 		return eventCategoryService.updateEventCategory(eventCategoryDto);
 	}
+
 	@DeleteMapping("/delete")
-	public void deleteEventCategory(DeleteEventCategoryRequestDto deleteEventCategory) {
+	public void deleteEventCategory(@Valid @RequestBody DeleteEventCategoryRequestDto deleteEventCategory) {
 		eventCategoryService.deleteEventCategory(deleteEventCategory);
 	}
-	
+
 }

@@ -53,16 +53,28 @@ public class House {
 	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<HouseNeed> houseNeeds = new HashSet<>();
 
+	/**
+	 * Sets the creation timestamp before the house entity is persisted.
+	 */
 	@PrePersist
 	protected void onCreate() {
 		this.createdAt = LocalDateTime.now();
 	}
 
+	/**
+	 * Updates the modification timestamp before the house entity is updated.
+	 */
 	@PreUpdate
 	protected void onUpdate() {
 		this.updatedAt = LocalDateTime.now();
 	}
 
+	/**
+	 * Adds a user as a member to this house with the designated role.
+	 *
+	 * @param user The user joining the house
+	 * @param role The role assigned to the member
+	 */
 	public void addMember(User user, MemberRole role) {
 		HouseMember houseMember = new HouseMember();
 		houseMember.setHouse(this);
@@ -70,24 +82,28 @@ public class House {
 		houseMember.setMemberRole(role);
 
 		this.members.add(houseMember);
-		user.getHouseMemberships().add(houseMember);
 	}
 
+	/**
+	 * Removes a user from this house's membership list by matching user ID.
+	 *
+	 * @param user The user to be removed
+	 */
 	public void removeMember(User user) {
+		if (user == null || user.getId() == null) {
+			return;
+		}
 
 		HouseMember houseMember = this.members.stream()
-				.filter(member -> member.getUser().equals(user))
+				.filter(member -> member.getUser() != null && user.getId().equals(member.getUser().getId()))
 				.findFirst()
 				.orElse(null);
 
 		if (houseMember != null) {
 			this.members.remove(houseMember);
-			user.getHouseMemberships().remove(houseMember);
-
 			houseMember.setHouse(null);
 			houseMember.setUser(null);
 		}
-
 	}
 
 }

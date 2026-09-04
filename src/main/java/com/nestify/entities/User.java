@@ -51,14 +51,20 @@ public class User {
 	@Column(name = "updatedAt")
 	private LocalDateTime updatedAt;
 
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "user")
 	private Set<HouseMember> houseMemberships = new HashSet<>();
 
+	/**
+	 * Sets the creation timestamp before the entity is persisted.
+	 */
 	@PrePersist
 	protected void onCreate() {
 		this.createdAt = LocalDateTime.now();
 	}
 
+	/**
+	 * Updates the modification timestamp before the entity is updated.
+	 */
 	@PreUpdate
 	protected void onUpdate() {
 		this.updatedAt = LocalDateTime.now();

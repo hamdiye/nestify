@@ -31,10 +31,12 @@ export const deleteUser    = (id)   => api.delete(`/users/delete/${id}`);
 // ─── Houses ─────────────────────────────────────────────────
 export const getHouses       = ()         => api.get('/houses');
 export const getHousesOfUser = (userId)   => api.get(`/users/${userId}/houses`);
-export const getHouseById = (id)     => api.get(`/houses/${id}`);
-export const createHouse  = (data)   => api.post('/houses/add', data);
-export const updateHouse  = (id, data) => api.put(`/houses/update/${id}`, data);
-export const deleteHouse  = (id)     => api.delete(`/houses/delete/${id}`);
+export const getHouseById           = (id)       => api.get(`/houses/${id}`);
+export const createHouse            = (data)     => api.post('/houses/add', data);
+export const updateHouse            = (id, data) => api.put(`/houses/update/${id}`, data);
+export const deleteHouse            = (id)       => api.delete(`/houses/delete/${id}`);
+export const joinHouseByInviteCode  = (inviteCode) =>
+  api.post('/houses/0/members/addMemberByInviteCode', { inviteCode });
 
 // ─── House Members ───────────────────────────────────────────
 export const getHouseMembers   = (houseId)       => api.get(`/houses/${houseId}/members`);

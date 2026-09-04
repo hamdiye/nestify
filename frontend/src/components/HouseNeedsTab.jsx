@@ -5,22 +5,22 @@ import {
 import { useUser } from '../context/UserContext';
 import Modal from './Modal';
 
-const STATUS_OPTIONS = ['PENDING', 'DONE', 'CANCELLED'];
-const STATUS_LABELS  = { PENDING: '⏳ Bekliyor', DONE: '✅ Tamamlandı', CANCELLED: '❌ İptal' };
-const STATUS_BADGE   = { PENDING: 'badge-pending', DONE: 'badge-done', CANCELLED: 'badge-cancelled' };
+const STATUS_OPTIONS = ['PENDING', 'COMPLETED', 'CANCELLED'];
+const STATUS_LABELS = { PENDING: '⏳ Bekliyor', COMPLETED: '✅ Tamamlandı', CANCELLED: '❌ İptal' };
+const STATUS_BADGE = { PENDING: 'badge-pending', COMPLETED: 'badge-completed', CANCELLED: 'badge-cancelled' };
 
-export default function HouseNeedsTab({ houseId }) {
+export default function HouseNeedsTab({ houseId, highlightNeedId }) {
   const { currentUser } = useUser();
-  const [needs,   setNeeds]   = useState([]);
+  const [needs, setNeeds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
 
-  const [createModal,   setCreateModal]   = useState(false);
-  const [editModal,     setEditModal]     = useState(null);
+  const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [saving,        setSaving]        = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const emptyForm = { title:'', description:'', status:'PENDING' };
+  const emptyForm = { title: '', description: '', status: 'PENDING' };
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
@@ -33,6 +33,18 @@ export default function HouseNeedsTab({ houseId }) {
   };
 
   useEffect(() => { load(); }, [houseId]);
+
+  useEffect(() => {
+    if (!loading && highlightNeedId) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`need-${highlightNeedId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, highlightNeedId, needs]);
 
   const handleCreate = async () => {
     if (!form.title) return;
@@ -118,12 +130,12 @@ export default function HouseNeedsTab({ houseId }) {
           <button className="btn btn-primary btn-sm" onClick={() => setCreateModal(true)}>＋ Ekle</button>
         </div>
       ) : (
-        <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {STATUS_OPTIONS.filter(s => grouped[s].length > 0).map(status => (
             <div key={status}>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABELS[status]}</span>
-                <span style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>({grouped[status].length})</span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>({grouped[status].length})</span>
               </div>
               <div className="table-container">
                 <table>
@@ -132,22 +144,39 @@ export default function HouseNeedsTab({ houseId }) {
                       <th>İhtiyaç</th>
                       <th>Açıklama</th>
                       <th>Durum</th>
-                      <th style={{ textAlign:'right' }}>İşlemler</th>
+                      <th style={{ textAlign: 'right' }}>İşlemler</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {grouped[status].map(need => (
-                      <tr key={need.id}>
-                        <td>
-                          <span style={{ fontWeight:600, color:'var(--text-primary)' }}>{need.title}</span>
-                        </td>
-                        <td style={{ maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {grouped[status].map(need => {
+                      const isHighlighted = highlightNeedId && Number(highlightNeedId) === need.id;
+                      return (
+                        <tr
+                          key={need.id}
+                          id={`need-${need.id}`}
+                          style={isHighlighted ? {
+                            backgroundColor: 'rgba(124, 58, 237, 0.18)',
+                            boxShadow: 'inset 4px 0 0 var(--accent-1)',
+                            transition: 'all 0.3s ease'
+                          } : {}}
+                        >
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{need.title}</span>
+                              {isHighlighted && (
+                                <span className="badge" style={{ background: 'rgba(124,58,237,0.2)', color: 'var(--accent-1)', fontSize: '0.68rem' }}>
+                                  🎯 Seçilen
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {need.description || '—'}
                         </td>
                         <td>
                           <select
                             className="form-select"
-                            style={{ padding:'4px 28px 4px 8px', fontSize:'0.78rem', maxWidth:140 }}
+                            style={{ padding: '4px 28px 4px 8px', fontSize: '0.78rem', maxWidth: 140 }}
                             value={need.status}
                             onChange={e => quickStatus(need, e.target.value)}
                           >
@@ -155,13 +184,14 @@ export default function HouseNeedsTab({ houseId }) {
                           </select>
                         </td>
                         <td>
-                          <div className="flex gap-8" style={{ justifyContent:'flex-end' }}>
+                          <div className="flex gap-8" style={{ justifyContent: 'flex-end' }}>
                             <button className="btn btn-secondary btn-sm" onClick={() => openEdit(need)}>✏️</button>
                             <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(need)}>🗑️</button>
                           </div>
                         </td>
-                      </tr>
-                    ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -174,7 +204,7 @@ export default function HouseNeedsTab({ houseId }) {
         <Modal title="🛒 Yeni İhtiyaç" onClose={() => setCreateModal(false)}
           footer={<>
             <button className="btn btn-secondary" onClick={() => setCreateModal(false)}>İptal</button>
-            <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving?'...':'Ekle'}</button>
+            <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving ? '...' : 'Ekle'}</button>
           </>}>
           <div className="form-group">
             <label className="form-label">Başlık *</label>
@@ -200,7 +230,7 @@ export default function HouseNeedsTab({ houseId }) {
         <Modal title="✏️ İhtiyacı Düzenle" onClose={() => setEditModal(null)}
           footer={<>
             <button className="btn btn-secondary" onClick={() => setEditModal(null)}>İptal</button>
-            <button className="btn btn-primary" onClick={handleUpdate} disabled={saving}>{saving?'...':'Kaydet'}</button>
+            <button className="btn btn-primary" onClick={handleUpdate} disabled={saving}>{saving ? '...' : 'Kaydet'}</button>
           </>}>
           <div className="form-group">
             <label className="form-label">Başlık *</label>
@@ -228,7 +258,7 @@ export default function HouseNeedsTab({ houseId }) {
             <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>İptal</button>
             <button className="btn btn-danger" onClick={handleDelete}>Evet, Sil</button>
           </>}>
-          <p><strong style={{color:'var(--text-primary)'}}>{deleteConfirm.title}</strong> öğesini silmek istediğinizden emin misiniz?</p>
+          <p><strong style={{ color: 'var(--text-primary)' }}>{deleteConfirm.title}</strong> öğesini silmek istediğinizden emin misiniz?</p>
         </Modal>
       )}
     </div>

@@ -18,6 +18,11 @@ public class HouseServiceHelper {
 				.orElseThrow(() -> new RuntimeException("Ev bulunamadı: " + houseId));
     }
     
+    public House getHouseOrThrowByInviteCode(String inviteCode) {
+    	return houseRepository.findByInviteCode(inviteCode)
+				.orElseThrow(() -> new RuntimeException("Ev bulunamadı: " + inviteCode));
+    }
+    
     public HouseMember getHouseMember(House house, Long userId) {
     	return house.getMembers().stream().filter(m -> m.getUser().getId().equals(userId))
 										  .findFirst()

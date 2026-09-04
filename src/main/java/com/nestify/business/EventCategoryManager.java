@@ -74,6 +74,7 @@ public class EventCategoryManager implements EventCategoryService {
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional
 	public void deleteEventCategory(DeleteEventCategoryRequestDto deleteEventDto) {
 		House house = houseHelper.getHouseOrThrow(deleteEventDto.getHouseId());
 		eventCategoryPolicy.validateEventCategory(house, deleteEventDto.getActingUserId());

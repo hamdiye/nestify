@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getHousesOfUser, createHouse, updateHouse, deleteHouse } from '../api/api';
+import { getHousesOfUser, createHouse, updateHouse, deleteHouse, joinHouseByInviteCode } from '../api/api';
 import { useUser } from '../context/UserContext';
 import Modal from '../components/Modal';
 
@@ -12,11 +12,15 @@ export default function HousesPage() {
   const [error, setError] = useState('');
 
   const [createModal, setCreateModal] = useState(false);
-  const [editModal,   setEditModal]   = useState(null); // house object
+  const [editModal,   setEditModal]   = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [joinModal,   setJoinModal]   = useState(false);
 
   const [form, setForm] = useState({ title: '', address: '', city: '' });
+  const [inviteCode, setInviteCode] = useState('');
+  const [joinError, setJoinError] = useState('');
   const [saving, setSaving] = useState(false);
+  const isJoiningRef = useRef(false);
 
   const load = async () => {
     try {
@@ -69,6 +73,35 @@ export default function HousesPage() {
     } catch (err) { setError(err.response?.data?.message || 'Silme hatası.'); }
   };
 
+  const handleJoin = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!inviteCode.trim() || isJoiningRef.current) return;
+
+    isJoiningRef.current = true;
+    try {
+      setSaving(true);
+      setJoinError('');
+      await joinHouseByInviteCode(inviteCode.trim());
+      setJoinModal(false);
+      setInviteCode('');
+      load();
+    } catch (err) {
+      setJoinError(err.response?.data?.message || 'Geçersiz davet kodu veya bir hata oluştu.');
+    } finally {
+      setSaving(false);
+      isJoiningRef.current = false;
+    }
+  };
+
+  const openJoinModal = () => {
+    setInviteCode('');
+    setJoinError('');
+    setJoinModal(true);
+  };
+
   const initials = (name = '') =>
     name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 
@@ -80,9 +113,14 @@ export default function HousesPage() {
           <h1>🏘️ Evlerim</h1>
           <p>Üye olduğunuz evleri görüntüleyin ve yönetin.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setForm({ title:'', address:'', city:'' }); setCreateModal(true); }}>
-          ＋ Yeni Ev
-        </button>
+        <div className="flex gap-8">
+          <button className="btn btn-secondary" onClick={openJoinModal}>
+            🔑 Eve Üye Ol
+          </button>
+          <button className="btn btn-primary" onClick={() => { setForm({ title: '', address: '', city: '' }); setCreateModal(true); }}>
+            ＋ Yeni Ev
+          </button>
+        </div>
       </div>
 
       {error && <div className="alert alert-error" onClick={() => setError('')}>⚠️ {error}</div>}
@@ -92,14 +130,20 @@ export default function HousesPage() {
       ) : houses.length === 0 ? (
         <div className="empty-state card">
           <div className="emoji">🏠</div>
-          <h3>Henüz ev yok</h3>
-          <p>İlk evi oluşturun.</p>
-          <button className="btn btn-primary" onClick={() => setCreateModal(true)}>＋ Ev Oluştur</button>
+          <h3>Henüz bir eviniz yok</h3>
+          <p>Yeni bir ev oluşturabilir veya davet koduyla mevcut bir eve üye olabilirsiniz.</p>
+          <div className="flex gap-8" style={{ justifyContent: 'center', marginTop: 12 }}>
+            <button className="btn btn-secondary" onClick={openJoinModal}>🔑 Eve Üye Ol</button>
+            <button className="btn btn-primary" onClick={() => setCreateModal(true)}>＋ Ev Oluştur</button>
+          </div>
         </div>
       ) : (
         <div className="grid-2">
           {houses.map(house => {
             const members = Array.isArray(house.members) ? house.members : [];
+            const myMembership = members.find(m => m.id === currentUser?.id);
+            const isHouseAdmin = myMembership?.role === 'ADMIN';
+
             return (
               <div key={house.id} className="house-card" onClick={() => navigate(`/houses/${house.id}`)}>
                 <div className="house-card-title">{house.title}</div>
@@ -119,10 +163,12 @@ export default function HousesPage() {
                     )}
                     <span className="member-count-badge">{members.length} üye</span>
                   </div>
-                  <div className="flex gap-8" onClick={e => e.stopPropagation()}>
-                    <button className="btn btn-secondary btn-sm" onClick={e => openEdit(house, e)}>✏️</button>
-                    <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); setDeleteConfirm(house); }}>🗑️</button>
-                  </div>
+                  {isHouseAdmin && (
+                    <div className="flex gap-8" onClick={e => e.stopPropagation()}>
+                      <button className="btn btn-secondary btn-sm" onClick={e => openEdit(house, e)}>✏️</button>
+                      <button className="btn btn-danger btn-sm" onClick={e => { e.stopPropagation(); setDeleteConfirm(house); }}>🗑️</button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -187,6 +233,41 @@ export default function HousesPage() {
           </>}>
           <p><strong style={{color:'var(--text-primary)'}}>{deleteConfirm.title}</strong> adlı evi silmek istediğinizden emin misiniz?</p>
           <p style={{marginTop:8, fontSize:'0.82rem', color:'var(--danger)'}}>⚠️ Bu işlem geri alınamaz. Ev boş olmalıdır.</p>
+        </Modal>
+      )}
+
+      {/* Join House Modal */}
+      {joinModal && (
+        <Modal title="🔑 Eve Üye Ol" onClose={() => setJoinModal(false)}
+          footer={<>
+            <button type="button" className="btn btn-secondary" onClick={() => setJoinModal(false)}>İptal</button>
+            <button type="submit" form="join-house-form" className="btn btn-primary" disabled={saving || !inviteCode.trim()}>
+              {saving ? 'Katılınıyor...' : 'Katıl'}
+            </button>
+          </>}>
+          {joinError && (
+            <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              ⚠️ {joinError}
+            </div>
+          )}
+          <form id="join-house-form" onSubmit={handleJoin}>
+            <div className="form-group">
+              <label className="form-label">Davet Kodu (Invite Code) *</label>
+              <input
+                className="form-input"
+                placeholder="Örn: a1b2c3d4"
+                value={inviteCode}
+                onChange={e => {
+                  setInviteCode(e.target.value);
+                  if (joinError) setJoinError('');
+                }}
+                autoFocus
+              />
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 6, display: 'block' }}>
+                💡 Ev sahibinden veya evdeki bir üyeden aldığınız davet kodunu giriniz.
+              </span>
+            </div>
+          </form>
         </Modal>
       )}
     </div>

@@ -6,7 +6,7 @@ import {
 import { useUser } from '../context/UserContext';
 import Modal from './Modal';
 
-export default function EventsTab({ houseId }) {
+export default function EventsTab({ houseId, highlightEventId }) {
   const { currentUser } = useUser();
   const [events,     setEvents]     = useState([]);
   const [categories, setCategories] = useState([]);
@@ -41,6 +41,18 @@ export default function EventsTab({ houseId }) {
   };
 
   useEffect(() => { load(); }, [houseId]);
+
+  useEffect(() => {
+    if (!loading && highlightEventId) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`event-${highlightEventId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, highlightEventId, events]);
 
   const toDatetimeLocal = (dt) => dt ? dt.replace(' ','T').slice(0,16) : '';
   const toIso = (s) => s ? s + ':00' : null;
@@ -150,13 +162,33 @@ export default function EventsTab({ houseId }) {
         <div className="grid-2">
           {events.map(ev => {
             const catColor = getCategoryColor(ev.eventCategoryId);
+            const isHighlighted = highlightEventId && Number(highlightEventId) === ev.id;
             return (
-              <div key={ev.id} className="card" style={{ borderLeft: `4px solid ${catColor}`, padding:20 }}>
+              <div
+                key={ev.id}
+                id={`event-${ev.id}`}
+                className="card"
+                style={{
+                  borderLeft: `4px solid ${catColor}`,
+                  padding: 20,
+                  ...(isHighlighted ? {
+                    border: '2px solid var(--accent-1)',
+                    borderLeft: `5px solid ${catColor}`,
+                    boxShadow: '0 0 0 4px rgba(124, 58, 237, 0.25), 0 8px 25px rgba(0, 0, 0, 0.4)',
+                    transition: 'all 0.3s ease'
+                  } : {})
+                }}
+              >
                 <div className="flex items-center gap-12 mb-16">
                   <div style={{
                     width:8, height:8, borderRadius:'50%', background: catColor, flexShrink:0
                   }} />
                   <h4 style={{ flex:1, color:'var(--text-primary)' }}>{ev.title}</h4>
+                  {isHighlighted && (
+                    <span className="badge" style={{ background: 'rgba(124,58,237,0.2)', color: 'var(--accent-1)', fontSize: '0.68rem' }}>
+                      🎯 Seçilen
+                    </span>
+                  )}
                   {ev.isAllDay && <span className="badge badge-member" style={{fontSize:'0.65rem'}}>Tüm Gün</span>}
                 </div>
                 {ev.description && <p style={{ fontSize:'0.82rem', marginBottom:12 }}>{ev.description}</p>}

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getHouseById } from '../api/api';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { getHouseById, removeMemberFromHouse } from '../api/api';
+import { useUser } from '../context/UserContext';
+import Modal from '../components/Modal';
 import MembersTab from '../components/MembersTab';
 import EventsTab from '../components/EventsTab';
 import EventCategoriesTab from '../components/EventCategoriesTab';
@@ -13,12 +15,62 @@ const TABS = [
   { id: 'needs',      icon: '🛒', label: 'İhtiyaçlar'  },
 ];
 
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* fallback */
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      title="Kopyala"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        padding: '3px 10px', borderRadius: 6, fontSize: '0.75rem',
+        background: copied ? 'rgba(16,185,129,.15)' : 'rgba(124,58,237,.12)',
+        border: `1px solid ${copied ? 'rgba(16,185,129,.35)' : 'rgba(124,58,237,.3)'}`,
+        color: copied ? '#34d399' : 'var(--accent-1)',
+        cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit', fontWeight: 600,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {copied ? '✓ Kopyalandı!' : '📋 Kopyala'}
+    </button>
+  );
+}
+
 export default function HouseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentUser } = useUser();
   const [house,   setHouse]   = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('members');
+
+  const urlTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(urlTab && TABS.some(t => t.id === urlTab) ? urlTab : 'members');
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && TABS.some(tab => tab.id === t)) {
+      setActiveTab(t);
+    }
+  }, [searchParams]);
+
+  const switchTab = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   useEffect(() => {
     (async () => {
@@ -33,6 +85,19 @@ export default function HouseDetailPage() {
     })();
   }, [id]);
 
+  const handleLeaveHouse = async () => {
+    try {
+      setLeaving(true);
+      await removeMemberFromHouse(house.id, { userId: currentUser.id });
+      setLeaveConfirm(false);
+      navigate('/houses');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Evden ayrılırken bir hata oluştu.');
+    } finally {
+      setLeaving(false);
+    }
+  };
+
   if (loading) return (
     <div className="loading"><div className="spinner" /><p>Ev yükleniyor...</p></div>
   );
@@ -40,6 +105,8 @@ export default function HouseDetailPage() {
   if (!house) return null;
 
   const members = Array.isArray(house.members) ? house.members : [];
+  const currentMember = members.find(m => m.id === currentUser?.id);
+  const isNonAdmin = currentMember && currentMember.role !== 'ADMIN';
 
   return (
     <div>
@@ -63,17 +130,36 @@ export default function HouseDetailPage() {
                   📍 {house.city}{house.address ? `, ${house.address}` : ''}
                 </span>
               )}
-              <span className="invite-code">🔑 {house.inviteCode}</span>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                  <span className="invite-code">🔑 {house.inviteCode}</span>
+                  <CopyButton text={house.inviteCode} />
+                </div>
+                <p style={{ fontSize:'0.78rem', color:'var(--text-muted)', margin:0 }}>
+                  💡 Eve üye eklemek istediğiniz kullanıcıyla bu kodu paylaşın. Kullanıcı bu kodla eve katılabilir.
+                </p>
+              </div>
               <span style={{ fontSize:'0.82rem', color:'var(--text-muted)' }}>
                 👥 {members.length} üye
               </span>
             </div>
           </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4 }}>OLUŞTURULMA</div>
-            <div style={{ fontSize:'0.875rem', color:'var(--text-secondary)' }}>
-              {house.createdAt ? new Date(house.createdAt).toLocaleDateString('tr-TR') : '—'}
+          <div style={{ textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end', gap:10 }}>
+            <div>
+              <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4 }}>OLUŞTURULMA</div>
+              <div style={{ fontSize:'0.875rem', color:'var(--text-secondary)' }}>
+                {house.createdAt ? new Date(house.createdAt).toLocaleDateString('tr-TR') : '—'}
+              </div>
             </div>
+            {isNonAdmin && (
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={() => setLeaveConfirm(true)}
+                style={{ display:'inline-flex', alignItems:'center', gap:6 }}
+              >
+                🚪 Evden Ayrıl
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -84,7 +170,7 @@ export default function HouseDetailPage() {
           <button
             key={tab.id}
             className={`tab${activeTab === tab.id ? ' active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => switchTab(tab.id)}
           >
             {tab.icon} {tab.label}
           </button>
@@ -93,9 +179,28 @@ export default function HouseDetailPage() {
 
       {/* Tab Content */}
       {activeTab === 'members'    && <MembersTab          houseId={id} />}
-      {activeTab === 'events'     && <EventsTab           houseId={id} />}
+      {activeTab === 'events'     && <EventsTab           houseId={id} highlightEventId={searchParams.get('eventId')} />}
       {activeTab === 'categories' && <EventCategoriesTab  houseId={id} />}
-      {activeTab === 'needs'      && <HouseNeedsTab       houseId={id} />}
+      {activeTab === 'needs'      && <HouseNeedsTab       houseId={id} highlightNeedId={searchParams.get('needId')} />}
+
+      {/* Leave House Confirm Modal */}
+      {leaveConfirm && (
+        <Modal
+          title="🚪 Evden Ayrıl"
+          onClose={() => setLeaveConfirm(false)}
+          footer={<>
+            <button className="btn btn-secondary" onClick={() => setLeaveConfirm(false)}>İptal</button>
+            <button className="btn btn-danger" onClick={handleLeaveHouse} disabled={leaving}>
+              {leaving ? 'Ayrılınıyor...' : 'Evet, Ayrıl'}
+            </button>
+          </>}
+        >
+          <p><strong style={{ color:'var(--text-primary)' }}>{house.title}</strong> adlı evden ayrılmak istediğinizden emin misiniz?</p>
+          <p style={{ marginTop:8, fontSize:'0.82rem', color:'var(--danger)' }}>
+            ⚠️ Evden ayrıldıktan sonra tekrar katılabilmek için evin davet koduna ihtiyacınız olacaktır.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }

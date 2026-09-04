@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  getHouseMembers, addMemberToHouse, removeMemberFromHouse, changeMemberRole,
-  getUsers
+  getHouseMembers, removeMemberFromHouse, changeMemberRole
 } from '../api/api';
 import { useUser } from '../context/UserContext';
 import Modal from './Modal';
 
 export default function MembersTab({ houseId }) {
   const { currentUser } = useUser();
+  const navigate = useNavigate();
   const [members, setMembers]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error,   setError]     = useState('');
 
-  const [addModal,    setAddModal]    = useState(false);
-  const [roleModal,   setRoleModal]   = useState(null); // member object
+  const [roleModal,   setRoleModal]   = useState(null);
   const [removeConfirm, setRemoveConfirm] = useState(null);
-
-  const [allUsers,  setAllUsers]  = useState([]);
-  const [addForm,   setAddForm]   = useState({ userId: '', role: 'MEMBER' });
+  const [leaveConfirm,  setLeaveConfirm]  = useState(false);
   const [saving,    setSaving]    = useState(false);
 
   const load = async () => {
@@ -29,26 +27,9 @@ export default function MembersTab({ houseId }) {
     finally { setLoading(false); }
   };
 
-  const loadAllUsers = async () => {
-    try {
-      const res = await getUsers(0, 100);
-      setAllUsers(res.data.content || []);
-    } catch { /**/ }
-  };
 
   useEffect(() => { load(); }, [houseId]);
 
-  const handleAdd = async () => {
-    if (!addForm.userId) return;
-    try {
-      setSaving(true);
-      await addMemberToHouse(houseId, { userId: Number(addForm.userId), role: addForm.role });
-      setAddModal(false);
-      setAddForm({ userId: '', role: 'MEMBER' });
-      load();
-    } catch (err) { setError(err.response?.data?.message || 'Üye eklenemedi.'); }
-    finally { setSaving(false); }
-  };
 
   const handleRemove = async () => {
     try {
@@ -58,6 +39,19 @@ export default function MembersTab({ houseId }) {
       load();
     } catch (err) { setError(err.response?.data?.message || 'Üye çıkarılamadı.'); }
     finally { setSaving(false); }
+  };
+
+  const handleLeaveHouse = async () => {
+    try {
+      setSaving(true);
+      await removeMemberFromHouse(houseId, { userId: currentUser.id });
+      setLeaveConfirm(false);
+      navigate('/houses');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Evden ayrılırken bir hata oluştu.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangeRole = async (newRole) => {
@@ -73,6 +67,10 @@ export default function MembersTab({ houseId }) {
   const initials = (name = '') =>
     name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 
+  const currentMember = members.find(m => m.id === currentUser?.id);
+  const isAdmin = currentMember?.role === 'ADMIN';
+  const isNonAdmin = currentMember && currentMember.role !== 'ADMIN';
+
   if (loading) return <div className="loading"><div className="spinner" /></div>;
 
   return (
@@ -81,9 +79,6 @@ export default function MembersTab({ houseId }) {
 
       <div className="section-header">
         <h3>👥 Ev Üyeleri ({members.length})</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => { loadAllUsers(); setAddModal(true); }}>
-          ＋ Üye Ekle
-        </button>
       </div>
 
       {members.length === 0 ? (
@@ -101,7 +96,7 @@ export default function MembersTab({ houseId }) {
                 <th>E-Posta</th>
                 <th>Katılım</th>
                 <th>Rol</th>
-                <th style={{ textAlign:'right' }}>İşlemler</th>
+                {(isAdmin || isNonAdmin) && <th style={{ textAlign:'right' }}>İşlemler</th>}
               </tr>
             </thead>
             <tbody>
@@ -131,18 +126,34 @@ export default function MembersTab({ houseId }) {
                       {m.role === 'ADMIN' ? '👑 Admin' : '👤 Üye'}
                     </span>
                   </td>
-                  <td>
-                    <div className="flex gap-8" style={{ justifyContent:'flex-end' }}>
-                      <button className="btn btn-secondary btn-sm"
-                        onClick={() => setRoleModal(m)}>
-                        🔄 Rol
-                      </button>
-                      <button className="btn btn-danger btn-sm"
-                        onClick={() => setRemoveConfirm(m)}>
-                        ✕
-                      </button>
-                    </div>
-                  </td>
+                  {isAdmin ? (
+                    <td>
+                      <div className="flex gap-8" style={{ justifyContent:'flex-end' }}>
+                        <button className="btn btn-secondary btn-sm"
+                          onClick={() => setRoleModal(m)}>
+                          🔄 Rol
+                        </button>
+                        <button className="btn btn-danger btn-sm"
+                          onClick={() => setRemoveConfirm(m)}>
+                          ✕
+                        </button>
+                      </div>
+                    </td>
+                  ) : isNonAdmin ? (
+                    <td>
+                      <div className="flex gap-8" style={{ justifyContent:'flex-end' }}>
+                        {m.id === currentUser?.id && (
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => setLeaveConfirm(true)}
+                            style={{ display:'inline-flex', alignItems:'center', gap:4 }}
+                          >
+                            🚪 Evden Ayrıl
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -150,35 +161,7 @@ export default function MembersTab({ houseId }) {
         </div>
       )}
 
-      {/* Add Member Modal */}
-      {addModal && (
-        <Modal title="➕ Üye Ekle" onClose={() => setAddModal(false)}
-          footer={<>
-            <button className="btn btn-secondary" onClick={() => setAddModal(false)}>İptal</button>
-            <button className="btn btn-primary" onClick={handleAdd} disabled={saving || !addForm.userId}>
-              {saving ? '...' : 'Ekle'}
-            </button>
-          </>}>
-          <div className="form-group">
-            <label className="form-label">Kullanıcı</label>
-            <select className="form-select" value={addForm.userId}
-              onChange={e => setAddForm(f => ({ ...f, userId: e.target.value }))}>
-              <option value="">Kullanıcı seçin</option>
-              {allUsers.filter(u => !members.find(m => m.id === u.id)).map(u => (
-                <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Rol</label>
-            <select className="form-select" value={addForm.role}
-              onChange={e => setAddForm(f => ({ ...f, role: e.target.value }))}>
-              <option value="MEMBER">👤 Üye</option>
-              <option value="ADMIN">👑 Admin</option>
-            </select>
-          </div>
-        </Modal>
-      )}
+      {/* Add Member Modal — kaldırıldı */}
 
       {/* Change Role Modal */}
       {roleModal && (
@@ -206,6 +189,25 @@ export default function MembersTab({ houseId }) {
             </button>
           </>}>
           <p><strong style={{color:'var(--text-primary)'}}>{removeConfirm.name}</strong> adlı üyeyi evden çıkarmak istediğinizden emin misiniz?</p>
+        </Modal>
+      )}
+
+      {/* Leave House Confirm Modal */}
+      {leaveConfirm && (
+        <Modal
+          title="🚪 Evden Ayrıl"
+          onClose={() => setLeaveConfirm(false)}
+          footer={<>
+            <button className="btn btn-secondary" onClick={() => setLeaveConfirm(false)}>İptal</button>
+            <button className="btn btn-danger" onClick={handleLeaveHouse} disabled={saving}>
+              {saving ? 'Ayrılınıyor...' : 'Evet, Ayrıl'}
+            </button>
+          </>}
+        >
+          <p>Bu evden ayrılmak istediğinizden emin misiniz?</p>
+          <p style={{ marginTop:8, fontSize:'0.82rem', color:'var(--danger)' }}>
+            ⚠️ Evden ayrıldıktan sonra tekrar katılabilmek için evin davet koduna ihtiyacınız olacaktır.
+          </p>
         </Modal>
       )}
     </div>

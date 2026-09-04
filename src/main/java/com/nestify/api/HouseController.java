@@ -18,6 +18,7 @@ import com.nestify.business.HouseNeedService;
 import com.nestify.business.HouseService;
 import com.nestify.dataTransferObject.request.AddUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.ChangeMemberRoleRequestDto;
+import com.nestify.dataTransferObject.request.JoinHouseByInviteCodeRequestDto;
 import com.nestify.dataTransferObject.request.RemoveUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.SaveHouseRequestDto;
 import com.nestify.dataTransferObject.request.UpdateHouseRequestDto;
@@ -78,6 +79,12 @@ public class HouseController {
 		return houseService.addMemberToHouse(houseId, addUserToHouseDto, actingUserId);
 	}
 
+	@PostMapping("/{houseId}/members/addMemberByInviteCode")
+	public GetHouseByIdResponseDto addMemberToHouseByInviteCode(@Valid @RequestBody JoinHouseByInviteCodeRequestDto joinHouseRequestDto,
+			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
+		return houseService.addMemberToHouseByInviteCode(joinHouseRequestDto, actingUserId);
+	}
+	
 	@PostMapping("/{houseId}/members/removeMember")
 	public GetHouseByIdResponseDto removeMemberToHouse(@PathVariable Long houseId,
 			@Valid @RequestBody RemoveUserToHouseRequestDto removeUserToHouseDto,
@@ -109,5 +116,7 @@ public class HouseController {
 			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
 		return houseNeedService.getHouseNeedsFromHouse(houseId, actingUserId);
 	}
+	
+
 
 }
