@@ -1,0 +1,14 @@
+target/
+frontend/
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+.settings
+.classpath
+.project
+.factorypath
+*.log
+.DS_Store
+HELP.md
