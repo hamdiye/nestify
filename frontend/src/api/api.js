@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8080/api/v1';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.nestify.hamdiyecicek.tech/api/v1';
 
 // Aktif kullanıcı ID'si header'a eklenir
 let actingUserId = null;
