@@ -26,7 +26,7 @@ function AppRoutes() {
 
     <Routes>
       <Route path="/" element={currentUser ? <Navigate to="/dashboard" replace /> : <SelectUserPage />} />
-      <Route path="/dashboard" element={<PrivateLayout><DashboardPage /></PrivateLayout>} />
+      {/* <Route path="/dashboard" element={<PrivateLayout><DashboardPage /></PrivateLayout>} /> */}
       <Route path="/houses" element={<PrivateLayout><HousesPage /></PrivateLayout>} />
       <Route path="/houses/:id" element={<PrivateLayout><HouseDetailPage /></PrivateLayout>} />
       <Route path="/calendar" element={<PrivateLayout><CalendarPage /></PrivateLayout>} />
