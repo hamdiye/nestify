@@ -23,16 +23,18 @@ function PrivateLayout({ children }) {
 function AppRoutes() {
   const { currentUser } = useUser();
   return (
+
     <Routes>
       <Route path="/" element={currentUser ? <Navigate to="/dashboard" replace /> : <SelectUserPage />} />
-      <Route path="/dashboard"  element={<PrivateLayout><DashboardPage /></PrivateLayout>} />
-      <Route path="/houses"     element={<PrivateLayout><HousesPage /></PrivateLayout>} />
+      <Route path="/dashboard" element={<PrivateLayout><DashboardPage /></PrivateLayout>} />
+      <Route path="/houses" element={<PrivateLayout><HousesPage /></PrivateLayout>} />
       <Route path="/houses/:id" element={<PrivateLayout><HouseDetailPage /></PrivateLayout>} />
-      <Route path="/calendar"   element={<PrivateLayout><CalendarPage /></PrivateLayout>} />
-      <Route path="/needs"      element={<PrivateLayout><NeedsPage /></PrivateLayout>} />
-      <Route path="/profile"    element={<PrivateLayout><ProfilePage /></PrivateLayout>} />
-      <Route path="*"          element={<Navigate to="/" replace />} />
+      <Route path="/calendar" element={<PrivateLayout><CalendarPage /></PrivateLayout>} />
+      <Route path="/needs" element={<PrivateLayout><NeedsPage /></PrivateLayout>} />
+      <Route path="/profile" element={<PrivateLayout><ProfilePage /></PrivateLayout>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+
   );
 }
 
