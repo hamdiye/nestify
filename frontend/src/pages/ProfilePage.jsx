@@ -8,6 +8,7 @@ export default function ProfilePage() {
   const [editModal, setEditModal] = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [error,     setError]     = useState('');
+  const [modalError,setModalError]    = useState('');
   const [success,   setSuccess]   = useState('');
 
   const [form, setForm] = useState({
@@ -18,6 +19,7 @@ export default function ProfilePage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setModalError('');
     setError('');
     setSuccess('');
     try {
@@ -32,7 +34,7 @@ export default function ProfilePage() {
       setEditModal(false);
       setForm(f => ({ ...f, password: '' }));
     } catch (err) {
-      setError(err.response?.data?.message || 'Güncelleme başarısız.');
+      setModalError(err.response?.data?.message || 'Güncelleme başarısız.');
     } finally {
       setSaving(false);
     }
@@ -105,10 +107,11 @@ export default function ProfilePage() {
       {editModal && (
         <Modal
           title="✏️ Profili Düzenle"
-          onClose={() => setEditModal(false)}
+          onClose={() => { setEditModal(false); setModalError(''); }}
+          error={modalError}
           footer={
             <>
-              <button className="btn btn-secondary" onClick={() => setEditModal(false)}>İptal</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { setEditModal(false); setModalError(''); }}>İptal</button>
               <button className="btn btn-primary" onClick={handleUpdate} disabled={saving}>
                 {saving ? 'Kaydediliyor...' : 'Kaydet'}
               </button>

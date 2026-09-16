@@ -12,6 +12,7 @@ export default function MembersTab({ houseId }) {
   const [members, setMembers]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error,   setError]     = useState('');
+  const [modalError, setModalError] = useState('');
 
   const [roleModal,   setRoleModal]   = useState(null);
   const [removeConfirm, setRemoveConfirm] = useState(null);
@@ -32,35 +33,38 @@ export default function MembersTab({ houseId }) {
 
 
   const handleRemove = async () => {
+    setModalError('');
     try {
       setSaving(true);
       await removeMemberFromHouse(houseId, { userId: removeConfirm.id });
       setRemoveConfirm(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Üye çıkarılamadı.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Üye çıkarılamadı.'); }
     finally { setSaving(false); }
   };
 
   const handleLeaveHouse = async () => {
+    setModalError('');
     try {
       setSaving(true);
       await removeMemberFromHouse(houseId, { userId: currentUser.id });
       setLeaveConfirm(false);
       navigate('/houses');
     } catch (err) {
-      setError(err.response?.data?.message || 'Evden ayrılırken bir hata oluştu.');
+      setModalError(err.response?.data?.message || 'Evden ayrılırken bir hata oluştu.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangeRole = async (newRole) => {
+    setModalError('');
     try {
       setSaving(true);
       await changeMemberRole(houseId, roleModal.id, { userId: roleModal.id, role: newRole });
       setRoleModal(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Rol değiştirilemedi.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Rol değiştirilemedi.'); }
     finally { setSaving(false); }
   };
 
@@ -165,8 +169,9 @@ export default function MembersTab({ houseId }) {
 
       {/* Change Role Modal */}
       {roleModal && (
-        <Modal title={`🔄 ${roleModal.name} — Rol Değiştir`} onClose={() => setRoleModal(null)}
-          footer={<button className="btn btn-secondary" onClick={() => setRoleModal(null)}>Kapat</button>}>
+        <Modal title={`🔄 ${roleModal.name} — Rol Değiştir`} onClose={() => { setRoleModal(null); setModalError(''); }}
+          error={modalError}
+          footer={<button className="btn btn-secondary" onClick={() => { setRoleModal(null); setModalError(''); }}>Kapat</button>}>
           <p style={{ marginBottom:16 }}>Yeni rol seçin:</p>
           <div className="flex gap-12">
             <button className="btn btn-secondary w-full" onClick={() => handleChangeRole('MEMBER')} disabled={saving}>
@@ -181,9 +186,10 @@ export default function MembersTab({ houseId }) {
 
       {/* Remove Confirm */}
       {removeConfirm && (
-        <Modal title="🗑️ Üyeyi Çıkar" onClose={() => setRemoveConfirm(null)}
+        <Modal title="🗑️ Üyeyi Çıkar" onClose={() => { setRemoveConfirm(null); setModalError(''); }}
+          error={modalError}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setRemoveConfirm(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setRemoveConfirm(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleRemove} disabled={saving}>
               {saving ? '...' : 'Çıkar'}
             </button>
@@ -196,9 +202,10 @@ export default function MembersTab({ houseId }) {
       {leaveConfirm && (
         <Modal
           title="🚪 Evden Ayrıl"
-          onClose={() => setLeaveConfirm(false)}
+          onClose={() => { setLeaveConfirm(false); setModalError(''); }}
+          error={modalError}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setLeaveConfirm(false)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setLeaveConfirm(false); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleLeaveHouse} disabled={saving}>
               {saving ? 'Ayrılınıyor...' : 'Evet, Ayrıl'}
             </button>

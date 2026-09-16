@@ -14,6 +14,7 @@ export default function EventCategoriesTab({ houseId }) {
   const [createModal, setCreateModal] = useState(false);
   const [editModal,   setEditModal]   = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [modalError,  setModalError]  = useState('');
   const [saving, setSaving] = useState(false);
 
   const emptyForm = { title:'', description:'', colorCode:'#7c3aed' };
@@ -34,11 +35,12 @@ export default function EventCategoriesTab({ houseId }) {
     if (!form.title || !form.colorCode) return;
     try {
       setSaving(true);
+      setModalError('');
       await createEventCategory({ userId: currentUser.id, houseId: Number(houseId), ...form });
       setCreateModal(false);
       setForm(emptyForm);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Oluşturma hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Oluşturma hatası.'); }
     finally { setSaving(false); }
   };
 
@@ -46,6 +48,7 @@ export default function EventCategoriesTab({ houseId }) {
     if (!editModal) return;
     try {
       setSaving(true);
+      setModalError('');
       await updateEventCategory({
         userId: currentUser.id,
         houseId: Number(houseId),
@@ -54,19 +57,21 @@ export default function EventCategoriesTab({ houseId }) {
       });
       setEditModal(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Güncelleme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Güncelleme hatası.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
     try {
+      setModalError('');
       await deleteEventCategory({ actingUserId: currentUser.id, houseId: Number(houseId), categoryId: deleteConfirm.id });
       setDeleteConfirm(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Silme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Silme hatası.'); }
   };
 
   const openEdit = (cat) => {
+    setModalError('');
     setForm({ title: cat.title, description: cat.description || '', colorCode: cat.colorCode });
     setEditModal(cat);
   };

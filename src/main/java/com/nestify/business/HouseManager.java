@@ -16,6 +16,7 @@ import com.nestify.dataTransferObject.request.UpdateHouseRequestDto;
 import com.nestify.dataTransferObject.response.GetAllHouseResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
 import com.nestify.dataTransferObject.response.UserSummaryForHouseDto;
+import com.nestify.entities.EventCategory;
 import com.nestify.entities.House;
 import com.nestify.entities.HouseMember;
 import com.nestify.entities.User;
@@ -40,7 +41,7 @@ public class HouseManager implements HouseService {
 	private final HousePolicy housePolicy;
 
 	/**
-	 * Creates a new house and assigns the creator user as ADMIN.
+	 * Creates a new house, assigns the creator as ADMIN, and creates a default category.
 	 *
 	 * @param houseDto DTO containing house attributes and creator user ID
 	 * @return Created house details DTO
@@ -57,6 +58,12 @@ public class HouseManager implements HouseService {
 		house.setInviteCode("HOUSE-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase());
 
 		house.addMember(user, MemberRole.ADMIN);
+
+		EventCategory defaultCategory = new EventCategory();
+		defaultCategory.setTitle("Genel");
+		defaultCategory.setDescription("Genel etkinlikler");
+		defaultCategory.setColorCode("#7C3AED");
+		house.addEventCategory(defaultCategory);
 
 		House savedHouse = houseRepository.save(house);
 

@@ -17,6 +17,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
   const [createModal,   setCreateModal]   = useState(false);
   const [editModal,     setEditModal]     = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [modalError,    setModalError]    = useState('');
   const [saving,        setSaving]        = useState(false);
 
   const emptyForm = {
@@ -43,16 +44,25 @@ export default function EventsTab({ houseId, highlightEventId }) {
   useEffect(() => { load(); }, [houseId]);
 
   useEffect(() => {
-    if (!loading && highlightEventId) {
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`event-${highlightEventId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-      return () => clearTimeout(timer);
+    if (highlightEventId && events.length > 0) {
+      const target = events.find(e => String(e.id) === String(highlightEventId));
+      if (target) {
+        setTimeout(() => {
+          const el = document.getElementById(`event-card-${highlightEventId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.transition = 'all 0.4s ease';
+            el.style.borderColor = 'var(--primary)';
+            el.style.boxShadow = '0 0 16px rgba(124, 58, 237, 0.4)';
+            setTimeout(() => {
+              el.style.borderColor = '';
+              el.style.boxShadow = '';
+            }, 3000);
+          }
+        }, 100);
+      }
     }
-  }, [loading, highlightEventId, events]);
+  }, [highlightEventId, events]);
 
   const toDatetimeLocal = (dt) => dt ? dt.replace(' ','T').slice(0,16) : '';
   const toIso = (s) => s ? s + ':00' : null;
@@ -61,6 +71,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
     if (!form.title) return;
     try {
       setSaving(true);
+      setModalError('');
       await createEvent({
         houseId: Number(houseId),
         assignedUserId: form.assignedUserId ? Number(form.assignedUserId) : currentUser.id,
@@ -75,7 +86,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
       setCreateModal(false);
       setForm(emptyForm);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Oluşturma hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Oluşturma hatası.'); }
     finally { setSaving(false); }
   };
 
@@ -83,6 +94,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
     if (!editModal) return;
     try {
       setSaving(true);
+      setModalError('');
       await updateEvent(editModal.id, {
         houseId: Number(houseId),
         assignedUserId: form.assignedUserId ? Number(form.assignedUserId) : currentUser.id,
@@ -96,19 +108,21 @@ export default function EventsTab({ houseId, highlightEventId }) {
       });
       setEditModal(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Güncelleme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Güncelleme hatası.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
     try {
+      setModalError('');
       await deleteEvent({ eventId: deleteConfirm.id, houseId: Number(houseId), userId: currentUser.id });
       setDeleteConfirm(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Silme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Silme hatası.'); }
   };
 
   const openEdit = (ev) => {
+    setModalError('');
     setForm({
       title: ev.title || '',
       description: ev.description || '',
@@ -146,7 +160,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
 
       <div className="section-header">
         <h3>📅 Etkinlikler ({events.length})</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => { setForm(emptyForm); setCreateModal(true); }}>
+        <button className="btn btn-primary btn-sm" onClick={() => { setModalError(''); setForm(emptyForm); setCreateModal(true); }}>
           ＋ Etkinlik Ekle
         </button>
       </div>
@@ -156,7 +170,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
           <div className="emoji">📅</div>
           <h3>Etkinlik bulunamadı</h3>
           <p>Planlarınızı organize etmek için etkinlik oluşturun.</p>
-          <button className="btn btn-primary btn-sm" onClick={() => setCreateModal(true)}>＋ Ekle</button>
+          <button className="btn btn-primary btn-sm" onClick={() => { setModalError(''); setForm(emptyForm); setCreateModal(true); }}>＋ Ekle</button>
         </div>
       ) : (
         <div className="grid-2">
@@ -220,9 +234,9 @@ export default function EventsTab({ houseId, highlightEventId }) {
       )}
 
       {createModal && (
-        <Modal title="📅 Yeni Etkinlik" onClose={() => setCreateModal(false)}
+        <Modal title="📅 Yeni Etkinlik" error={modalError} onClose={() => { setCreateModal(false); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setCreateModal(false)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setCreateModal(false); setModalError(''); }}>İptal</button>
             <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving?'...':'Oluştur'}</button>
           </>}>
           <div className="form-group">
@@ -257,7 +271,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
               <label className="form-label">Kategori</label>
               <select className="form-select" value={form.eventCategoryId}
                 onChange={e => setForm(f => ({ ...f, eventCategoryId: e.target.value }))}>
-                <option value="">Seçiniz</option>
+                <option value="">Varsayılan (Genel)</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
             </div>
@@ -281,9 +295,9 @@ export default function EventsTab({ houseId, highlightEventId }) {
       )}
 
       {editModal && (
-        <Modal title="✏️ Etkinliği Düzenle" onClose={() => setEditModal(null)}
+        <Modal title="✏️ Etkinliği Düzenle" error={modalError} onClose={() => { setEditModal(null); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setEditModal(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setEditModal(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-primary" onClick={handleUpdate} disabled={saving}>{saving?'...':'Kaydet'}</button>
           </>}>
           <div className="form-group">
@@ -318,7 +332,7 @@ export default function EventsTab({ houseId, highlightEventId }) {
               <label className="form-label">Kategori</label>
               <select className="form-select" value={form.eventCategoryId}
                 onChange={e => setForm(f => ({ ...f, eventCategoryId: e.target.value }))}>
-                <option value="">Seçiniz</option>
+                <option value="">Varsayılan (Genel)</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
             </div>
@@ -342,9 +356,9 @@ export default function EventsTab({ houseId, highlightEventId }) {
       )}
 
       {deleteConfirm && (
-        <Modal title="🗑️ Etkinliği Sil" onClose={() => setDeleteConfirm(null)}
+        <Modal title="🗑️ Etkinliği Sil" error={modalError} onClose={() => { setDeleteConfirm(null); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setDeleteConfirm(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleDelete}>Evet, Sil</button>
           </>}>
           <p><strong style={{color:'var(--text-primary)'}}>{deleteConfirm.title}</strong> etkinliğini silmek istediğinizden emin misiniz?</p>

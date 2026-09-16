@@ -962,7 +962,7 @@ export default function CalendarPage() {
                   value={form.eventCategoryId}
                   onChange={e => setForm(f => ({ ...f, eventCategoryId: e.target.value }))}
                 >
-                  <option value="">Kategori seçiniz</option>
+                  <option value="">Varsayılan (Genel)</option>
                   {currentFormCategories.map(c => (
                     <option key={c.id} value={c.id}>
                       {c.title}

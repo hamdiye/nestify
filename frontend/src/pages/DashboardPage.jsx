@@ -11,6 +11,15 @@ export default function DashboardPage() {
   const [needs, setNeeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showBanner, setShowBanner] = useState(() => localStorage.getItem('hide_welcome_banner') !== 'true');
+
+  /**
+   * Dismisses the welcome banner and persists the user preference to local storage.
+   */
+  const handleDismissBanner = () => {
+    setShowBanner(false);
+    localStorage.setItem('hide_welcome_banner', 'true');
+  };
 
   const loadData = async () => {
     try {
@@ -135,10 +144,21 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Welcome Banner */}
-      <div className="welcome-banner">
-        <h1>Merhaba, {currentUser?.name?.split(' ')[0] || 'Kullanıcı'} 👋</h1>
-        <p>Evlerinizdeki yaklaşan etkinlikleri ve ortak ihtiyaçları buradan takip edebilirsiniz.</p>
-      </div>
+      {showBanner && (
+        <div className="welcome-banner">
+          <button
+            type="button"
+            className="welcome-banner-close"
+            onClick={handleDismissBanner}
+            aria-label="Kapat"
+            title="Kapat"
+          >
+            ✕
+          </button>
+          <h1>Merhaba, {currentUser?.name?.split(' ')[0] || 'Kullanıcı'} 👋</h1>
+          <p>Evlerinizdeki yaklaşan etkinlikleri ve ortak ihtiyaçları buradan takip edebilirsiniz.</p>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid-4 mb-32">

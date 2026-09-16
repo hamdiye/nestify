@@ -59,6 +59,7 @@ export default function HouseDetailPage() {
   const [activeTab, setActiveTab] = useState(urlTab && TABS.some(t => t.id === urlTab) ? urlTab : 'members');
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -86,13 +87,14 @@ export default function HouseDetailPage() {
   }, [id]);
 
   const handleLeaveHouse = async () => {
+    setModalError('');
     try {
       setLeaving(true);
       await removeMemberFromHouse(house.id, { userId: currentUser.id });
       setLeaveConfirm(false);
       navigate('/houses');
     } catch (err) {
-      alert(err.response?.data?.message || 'Evden ayrılırken bir hata oluştu.');
+      setModalError(err.response?.data?.message || 'Evden ayrılırken bir hata oluştu.');
     } finally {
       setLeaving(false);
     }
@@ -187,9 +189,10 @@ export default function HouseDetailPage() {
       {leaveConfirm && (
         <Modal
           title="🚪 Evden Ayrıl"
-          onClose={() => setLeaveConfirm(false)}
+          onClose={() => { setLeaveConfirm(false); setModalError(''); }}
+          error={modalError}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setLeaveConfirm(false)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setLeaveConfirm(false); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleLeaveHouse} disabled={leaving}>
               {leaving ? 'Ayrılınıyor...' : 'Evet, Ayrıl'}
             </button>

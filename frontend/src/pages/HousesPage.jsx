@@ -18,7 +18,7 @@ export default function HousesPage() {
 
   const [form, setForm] = useState({ title: '', address: '', city: '' });
   const [inviteCode, setInviteCode] = useState('');
-  const [joinError, setJoinError] = useState('');
+  const [modalError, setModalError] = useState('');
   const [saving, setSaving] = useState(false);
   const isJoiningRef = useRef(false);
 
@@ -38,11 +38,12 @@ export default function HousesPage() {
     if (!form.title) return;
     try {
       setSaving(true);
+      setModalError('');
       await createHouse({ userId: currentUser.id, ...form, members: [] });
       setCreateModal(false);
       setForm({ title: '', address: '', city: '' });
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Hata oluştu.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Hata oluştu.'); }
     finally { setSaving(false); }
   };
 
@@ -51,15 +52,17 @@ export default function HousesPage() {
     if (!editModal?.id) return;
     try {
       setSaving(true);
+      setModalError('');
       await updateHouse(editModal.id, { userId: currentUser.id, ...form });
       setEditModal(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Güncelleme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Güncelleme hatası.'); }
     finally { setSaving(false); }
   };
 
   const openEdit = (house, ev) => {
     ev.stopPropagation();
+    setModalError('');
     setForm({ title: house.title, address: house.address || '', city: house.city || '' });
     setEditModal(house);
   };
@@ -67,10 +70,11 @@ export default function HousesPage() {
   const handleDelete = async () => {
     if (!deleteConfirm) return;
     try {
+      setModalError('');
       await deleteHouse(deleteConfirm.id);
       setDeleteConfirm(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Silme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Silme hatası.'); }
   };
 
   const handleJoin = async (e) => {
@@ -83,13 +87,13 @@ export default function HousesPage() {
     isJoiningRef.current = true;
     try {
       setSaving(true);
-      setJoinError('');
+      setModalError('');
       await joinHouseByInviteCode(inviteCode.trim());
       setJoinModal(false);
       setInviteCode('');
       load();
     } catch (err) {
-      setJoinError(err.response?.data?.message || 'Geçersiz davet kodu veya bir hata oluştu.');
+      setModalError(err.response?.data?.message || 'Geçersiz davet kodu veya bir hata oluştu.');
     } finally {
       setSaving(false);
       isJoiningRef.current = false;
@@ -98,7 +102,7 @@ export default function HousesPage() {
 
   const openJoinModal = () => {
     setInviteCode('');
-    setJoinError('');
+    setModalError('');
     setJoinModal(true);
   };
 
@@ -117,7 +121,7 @@ export default function HousesPage() {
           <button className="btn btn-secondary" onClick={openJoinModal}>
             🔑 Eve Üye Ol
           </button>
-          <button className="btn btn-primary" onClick={() => { setForm({ title: '', address: '', city: '' }); setCreateModal(true); }}>
+          <button className="btn btn-primary" onClick={() => { setModalError(''); setForm({ title: '', address: '', city: '' }); setCreateModal(true); }}>
             ＋ Yeni Ev
           </button>
         </div>
@@ -134,7 +138,7 @@ export default function HousesPage() {
           <p>Yeni bir ev oluşturabilir veya davet koduyla mevcut bir eve üye olabilirsiniz.</p>
           <div className="flex gap-8" style={{ justifyContent: 'center', marginTop: 12 }}>
             <button className="btn btn-secondary" onClick={openJoinModal}>🔑 Eve Üye Ol</button>
-            <button className="btn btn-primary" onClick={() => setCreateModal(true)}>＋ Ev Oluştur</button>
+            <button className="btn btn-primary" onClick={() => { setModalError(''); setForm({ title: '', address: '', city: '' }); setCreateModal(true); }}>＋ Ev Oluştur</button>
           </div>
         </div>
       ) : (
@@ -177,9 +181,9 @@ export default function HousesPage() {
       )}
 
       {createModal && (
-        <Modal title="🏠 Yeni Ev Oluştur" onClose={() => setCreateModal(false)}
+        <Modal title="🏠 Yeni Ev Oluştur" error={modalError} onClose={() => { setCreateModal(false); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setCreateModal(false)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setCreateModal(false); setModalError(''); }}>İptal</button>
             <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving ? '...' : 'Oluştur'}</button>
           </>}>
           <div className="form-group">
@@ -201,9 +205,9 @@ export default function HousesPage() {
       )}
 
       {editModal && (
-        <Modal title="✏️ Evi Düzenle" onClose={() => setEditModal(null)}
+        <Modal title="✏️ Evi Düzenle" error={modalError} onClose={() => { setEditModal(null); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setEditModal(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setEditModal(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-primary" onClick={handleEdit} disabled={saving}>{saving ? '...' : 'Kaydet'}</button>
           </>}>
           <div className="form-group">
@@ -226,9 +230,9 @@ export default function HousesPage() {
 
       {/* Delete Confirm */}
       {deleteConfirm && (
-        <Modal title="🗑️ Evi Sil" onClose={() => setDeleteConfirm(null)}
+        <Modal title="🗑️ Evi Sil" error={modalError} onClose={() => { setDeleteConfirm(null); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setDeleteConfirm(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleDelete}>Evet, Sil</button>
           </>}>
           <p><strong style={{color:'var(--text-primary)'}}>{deleteConfirm.title}</strong> adlı evi silmek istediğinizden emin misiniz?</p>
@@ -238,18 +242,13 @@ export default function HousesPage() {
 
       {/* Join House Modal */}
       {joinModal && (
-        <Modal title="🔑 Eve Üye Ol" onClose={() => setJoinModal(false)}
+        <Modal title="🔑 Eve Üye Ol" error={modalError} onClose={() => { setJoinModal(false); setModalError(''); }}
           footer={<>
-            <button type="button" className="btn btn-secondary" onClick={() => setJoinModal(false)}>İptal</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setJoinModal(false); setModalError(''); }}>İptal</button>
             <button type="submit" form="join-house-form" className="btn btn-primary" disabled={saving || !inviteCode.trim()}>
               {saving ? 'Katılınıyor...' : 'Katıl'}
             </button>
           </>}>
-          {joinError && (
-            <div className="alert alert-error" style={{ marginBottom: 16 }}>
-              ⚠️ {joinError}
-            </div>
-          )}
           <form id="join-house-form" onSubmit={handleJoin}>
             <div className="form-group">
               <label className="form-label">Davet Kodu (Invite Code) *</label>
@@ -259,7 +258,7 @@ export default function HousesPage() {
                 value={inviteCode}
                 onChange={e => {
                   setInviteCode(e.target.value);
-                  if (joinError) setJoinError('');
+                  if (modalError) setModalError('');
                 }}
                 autoFocus
               />

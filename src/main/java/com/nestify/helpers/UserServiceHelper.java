@@ -25,4 +25,14 @@ public class UserServiceHelper {
     public Boolean emailIsExist(String email) {
     	return userRepository.findByEmail(email).isPresent();
     }
+
+    /**
+     * Checks whether the given user is a member of at least one house.
+     *
+     * @param userId the ID of the user to check
+     * @return true if the user has at least one house membership, false otherwise
+     */
+    public boolean isUserMemberOfAnyHouse(Long userId) {
+        return userRepository.existsByIdAndHouseMembershipsIsNotEmpty(userId);
+    }
 }

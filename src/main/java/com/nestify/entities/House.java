@@ -106,4 +106,14 @@ public class House {
 		}
 	}
 
+	/**
+	 * Associates an event category with this house.
+	 *
+	 * @param category The event category to associate with this house
+	 */
+	public void addEventCategory(EventCategory category) {
+		category.setHouse(this);
+		this.eventCategories.add(category);
+	}
+
 }

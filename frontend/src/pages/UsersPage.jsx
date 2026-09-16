@@ -10,6 +10,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [modalError, setModalError] = useState('');
 
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(null);
@@ -34,33 +35,36 @@ export default function UsersPage() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setModalError('');
     try {
       setSaving(true);
       await createUser(form);
       setCreateModal(false);
       setForm({ name: '', email: '', password: '', confirmPassword: '' });
       load(page);
-    } catch (err) { setError(err.response?.data?.message || 'Oluşturma hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Oluşturma hatası.'); }
     finally { setSaving(false); }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setModalError('');
     try {
       setSaving(true);
       await updateUser(editModal.id, form);
       setEditModal(null);
       load(page);
-    } catch (err) { setError(err.response?.data?.message || 'Güncelleme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Güncelleme hatası.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
+    setModalError('');
     try {
       await deleteUser(deleteConfirm.id);
       setDeleteConfirm(null);
       load(page);
-    } catch (err) { setError(err.response?.data?.message || 'Silme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Silme hatası.'); }
   };
 
   const openEdit = (user) => {
@@ -198,10 +202,11 @@ export default function UsersPage() {
 
       {/* Create */}
       {createModal && (
-        <Modal title="➕ Yeni Kullanıcı" onClose={() => setCreateModal(false)}
+        <Modal title="➕ Yeni Kullanıcı" onClose={() => { setCreateModal(false); setModalError(''); }}
+          error={modalError}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setCreateModal(false)}>İptal</button>
-            <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving ? '...' : 'Oluştur'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setCreateModal(false); setModalError(''); }}>İptal</button>
+            <button type="button" className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving ? '...' : 'Oluştur'}</button>
           </>}>
           <UserForm onSubmit={handleCreate} />
         </Modal>
@@ -209,10 +214,11 @@ export default function UsersPage() {
 
       {/* Edit */}
       {editModal && (
-        <Modal title="✏️ Kullanıcıyı Düzenle" onClose={() => setEditModal(null)}
+        <Modal title="✏️ Kullanıcıyı Düzenle" onClose={() => { setEditModal(null); setModalError(''); }}
+          error={modalError}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setEditModal(null)}>İptal</button>
-            <button className="btn btn-primary" onClick={handleUpdate} disabled={saving}>{saving ? '...' : 'Kaydet'}</button>
+            <button type="button" className="btn btn-secondary" onClick={() => { setEditModal(null); setModalError(''); }}>İptal</button>
+            <button type="button" className="btn btn-primary" onClick={handleUpdate} disabled={saving}>{saving ? '...' : 'Kaydet'}</button>
           </>}>
           <UserForm onSubmit={handleUpdate} />
         </Modal>
@@ -220,9 +226,10 @@ export default function UsersPage() {
 
       {/* Delete */}
       {deleteConfirm && (
-        <Modal title="🗑️ Kullanıcıyı Sil" onClose={() => setDeleteConfirm(null)}
+        <Modal title="🗑️ Kullanıcıyı Sil" onClose={() => { setDeleteConfirm(null); setModalError(''); }}
+          error={modalError}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setDeleteConfirm(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleDelete}>Evet, Sil</button>
           </>}>
           <p><strong style={{ color: 'var(--text-primary)' }}>{deleteConfirm.name}</strong> adlı kullanıcıyı silmek istediğinizden emin misiniz?</p>

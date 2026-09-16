@@ -43,6 +43,8 @@ public class HouseNeedManager implements HouseNeedService {
 
 	@Override
 	public GetHouseNeedByIdResponseDto addHouseNeed(SaveHouseNeedRequestDto houseNeedRequest) {
+		houseNeedPolicy.validateHouseNeedCreation(houseNeedRequest.getCreatedById());
+
 		User user = userServiceHelper.getUserOrThrow(houseNeedRequest.getCreatedById());
 		House house = houseServiceHelper.getHouseOrThrow(houseNeedRequest.getHouseId());
 		

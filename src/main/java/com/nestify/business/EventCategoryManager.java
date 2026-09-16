@@ -3,6 +3,7 @@ package com.nestify.business;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.nestify.dataAccess.EventCategoryRepository;
 import com.nestify.dataTransferObject.request.DeleteEventCategoryRequestDto;
@@ -27,10 +28,24 @@ public class EventCategoryManager implements EventCategoryService {
 	private final EventCategoryMapper eventCategoryMapper;
 	private final EventCategoryServiceHelper eventCategoryHelper;
 
+	/**
+	 * Retrieves all event categories for a house. If no categories exist, a default category is created.
+	 *
+	 * @param houseId ID of the house
+	 * @param actingUserId ID of the user requesting the categories
+	 * @return list of event category response DTOs
+	 */
 	@Override
+	@Transactional
 	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(Long houseId, Long actingUserId) {
 		House house = houseHelper.getHouseOrThrow(houseId);
 		eventCategoryPolicy.validateEventCategory(house, actingUserId);
+
+		if (house.getEventCategories() == null || house.getEventCategories().isEmpty()) {
+			EventCategory defaultCat = eventCategoryHelper.getOrCreateDefaultCategory(house);
+			house.getEventCategories().add(defaultCat);
+		}
+
 		List<GetEventCategoryResponseDto> eventCategories = house.getEventCategories()
 				.stream()
 				.map(eventCategory -> eventCategoryMapper.toGetEventCategoryResponseDto(eventCategory))

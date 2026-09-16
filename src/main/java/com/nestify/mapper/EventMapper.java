@@ -7,6 +7,12 @@ import com.nestify.entities.Event;
 
 @Component
 public class EventMapper {
+	/**
+	 * Converts an Event entity to a GetEventByIdResponseDto.
+	 *
+	 * @param event the Event entity to convert
+	 * @return the converted GetEventByIdResponseDto or null if input is null
+	 */
 	public GetEventByIdResponseDto toGetEventByIdResponseDto(Event event) {
 		if (event == null) {
             return null;
@@ -19,9 +25,9 @@ public class EventMapper {
 				event.getEndDate(),
 				event.getIsAllDay(),
 				event.getLocation(),
-				event.getEventCategory().getId(),
-				event.getHouse().getId(),
-				event.getAssignedUser().getId()
+				event.getEventCategory() != null ? event.getEventCategory().getId() : null,
+				event.getHouse() != null ? event.getHouse().getId() : null,
+				event.getAssignedUser() != null ? event.getAssignedUser().getId() : null
 			);
 	}
 }

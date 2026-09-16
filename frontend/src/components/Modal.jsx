@@ -1,6 +1,16 @@
 import { useEffect } from 'react';
 
-export default function Modal({ title, onClose, children, footer }) {
+/**
+ * Renders a modal dialog with header, body, optional footer, and error alert.
+ *
+ * @param {Object} props
+ * @param {string} props.title - The modal title
+ * @param {Function} props.onClose - Callback triggered to close the modal
+ * @param {React.ReactNode} props.children - Content rendered inside the modal body
+ * @param {React.ReactNode} [props.footer] - Optional footer content
+ * @param {string} [props.error] - Optional error message displayed inside the modal
+ */
+export default function Modal({ title, onClose, children, footer, error }) {
   // ESC ile kapat
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
@@ -15,7 +25,14 @@ export default function Modal({ title, onClose, children, footer }) {
           <h2>{title}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
-        <div className="modal-body">{children}</div>
+        <div className="modal-body">
+          {error && (
+            <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              ⚠️ {error}
+            </div>
+          )}
+          {children}
+        </div>
         {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>

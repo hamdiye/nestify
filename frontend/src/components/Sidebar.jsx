@@ -5,6 +5,7 @@ const navItems = [
   { to: '/dashboard', icon: '🏠', label: 'Dashboard'  },
   { to: '/houses',    icon: '🏘️', label: 'Evler'       },
   { to: '/calendar',  icon: '📅', label: 'Takvim'      },
+  { to: '/needs',     icon: '🛒', label: 'İhtiyaçlar'  },
   { to: '/profile',   icon: '👤', label: 'Profilim'    },
 ];
 

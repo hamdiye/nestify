@@ -18,6 +18,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [modalError, setModalError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const emptyForm = { title: '', description: '', status: 'PENDING' };
@@ -50,6 +51,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
     if (!form.title) return;
     try {
       setSaving(true);
+      setModalError('');
       await createHouseNeed({
         houseId: Number(houseId),
         createdById: currentUser.id,
@@ -60,7 +62,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
       setCreateModal(false);
       setForm(emptyForm);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Oluşturma hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Oluşturma hatası.'); }
     finally { setSaving(false); }
   };
 
@@ -68,6 +70,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
     if (!editModal) return;
     try {
       setSaving(true);
+      setModalError('');
       await updateHouseNeed({
         id: editModal.id,
         houseId: Number(houseId),
@@ -78,16 +81,17 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
       });
       setEditModal(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Güncelleme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Güncelleme hatası.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
     try {
+      setModalError('');
       await deleteHouseNeed({ houseNeedId: deleteConfirm.id, houseId: Number(houseId), userId: currentUser.id });
       setDeleteConfirm(null);
       load();
-    } catch (err) { setError(err.response?.data?.message || 'Silme hatası.'); }
+    } catch (err) { setModalError(err.response?.data?.message || 'Silme hatası.'); }
   };
 
   // Hızlı durum değiştirme
@@ -99,6 +103,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
   };
 
   const openEdit = (need) => {
+    setModalError('');
     setForm({ title: need.title, description: need.description || '', status: need.status });
     setEditModal(need);
   };
@@ -117,7 +122,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
 
       <div className="section-header">
         <h3>🛒 Ev İhtiyaçları ({needs.length})</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => { setForm(emptyForm); setCreateModal(true); }}>
+        <button className="btn btn-primary btn-sm" onClick={() => { setModalError(''); setForm(emptyForm); setCreateModal(true); }}>
           ＋ İhtiyaç Ekle
         </button>
       </div>
@@ -127,7 +132,7 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
           <div className="emoji">🛒</div>
           <h3>İhtiyaç bulunamadı</h3>
           <p>Ev alışveriş listesini veya görevleri buradan yönetin.</p>
-          <button className="btn btn-primary btn-sm" onClick={() => setCreateModal(true)}>＋ Ekle</button>
+          <button className="btn btn-primary btn-sm" onClick={() => { setModalError(''); setForm(emptyForm); setCreateModal(true); }}>＋ Ekle</button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -201,9 +206,9 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
       )}
 
       {createModal && (
-        <Modal title="🛒 Yeni İhtiyaç" onClose={() => setCreateModal(false)}
+        <Modal title="🛒 Yeni İhtiyaç" error={modalError} onClose={() => { setCreateModal(false); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setCreateModal(false)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setCreateModal(false); setModalError(''); }}>İptal</button>
             <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>{saving ? '...' : 'Ekle'}</button>
           </>}>
           <div className="form-group">
@@ -227,9 +232,9 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
       )}
 
       {editModal && (
-        <Modal title="✏️ İhtiyacı Düzenle" onClose={() => setEditModal(null)}
+        <Modal title="✏️ İhtiyacı Düzenle" error={modalError} onClose={() => { setEditModal(null); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setEditModal(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setEditModal(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-primary" onClick={handleUpdate} disabled={saving}>{saving ? '...' : 'Kaydet'}</button>
           </>}>
           <div className="form-group">
@@ -253,9 +258,9 @@ export default function HouseNeedsTab({ houseId, highlightNeedId }) {
       )}
 
       {deleteConfirm && (
-        <Modal title="🗑️ İhtiyacı Sil" onClose={() => setDeleteConfirm(null)}
+        <Modal title="🗑️ İhtiyacı Sil" error={modalError} onClose={() => { setDeleteConfirm(null); setModalError(''); }}
           footer={<>
-            <button className="btn btn-secondary" onClick={() => setDeleteConfirm(null)}>İptal</button>
+            <button className="btn btn-secondary" onClick={() => { setDeleteConfirm(null); setModalError(''); }}>İptal</button>
             <button className="btn btn-danger" onClick={handleDelete}>Evet, Sil</button>
           </>}>
           <p><strong style={{ color: 'var(--text-primary)' }}>{deleteConfirm.title}</strong> öğesini silmek istediğinizden emin misiniz?</p>

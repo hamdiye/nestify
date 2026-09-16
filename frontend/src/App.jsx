@@ -7,6 +7,7 @@ import HousesPage from './pages/HousesPage';
 import HouseDetailPage from './pages/HouseDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import CalendarPage from './pages/CalendarPage';
+import NeedsPage from './pages/NeedsPage';
 
 function PrivateLayout({ children }) {
   const { currentUser } = useUser();
@@ -28,6 +29,7 @@ function AppRoutes() {
       <Route path="/houses"     element={<PrivateLayout><HousesPage /></PrivateLayout>} />
       <Route path="/houses/:id" element={<PrivateLayout><HouseDetailPage /></PrivateLayout>} />
       <Route path="/calendar"   element={<PrivateLayout><CalendarPage /></PrivateLayout>} />
+      <Route path="/needs"      element={<PrivateLayout><NeedsPage /></PrivateLayout>} />
       <Route path="/profile"    element={<PrivateLayout><ProfilePage /></PrivateLayout>} />
       <Route path="*"          element={<Navigate to="/" replace />} />
     </Routes>
