@@ -1,8 +1,8 @@
-name: CI/CD Pipeline - Deploy Nestify
+name: Deploy Nestify Monorepo
 
 on:
   push:
-    branches: [ "main" ] # veya "master"
+    branches: [ "main" ] # Eğer varsayılan dalınız "master" ise "master" yapın
 
 env:
   REGISTRY: ghcr.io
@@ -10,45 +10,80 @@ env:
   FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend:latest
 
 jobs:
-  build-and-push:
+  # 1. Hangi tarafın değiştiğini tespit et
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'src/**'
+              - 'pom.xml'
+              - 'Dockerfile'
+
+  # 2. Backend Değiştiyse: Kök dizini (.) derle ve GHCR'a gönder
+  build-backend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.run_number == 1 }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Log in to GitHub Container Registry
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # 1. Backend Build & Push
-      - name: Build & Push Backend Image
+      - name: Build & Push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./backend  # Backend klasörünüzün yolu
+          context: .              # <-- Backend artık ana (root) dizin
+          file: ./Dockerfile      # <-- Kök dizindeki Dockerfile
           push: true
           tags: ${{ env.BACKEND_IMAGE }}
 
-      # 2. Frontend Build & Push
-      - name: Build & Push Frontend Image
+  # 3. Frontend Değiştiyse: frontend/ klasörünü derle ve GHCR'a gönder
+  build-frontend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.run_number == 1 }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & Push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend # Frontend klasörünüzün yolu
+          context: ./frontend     # <-- Frontend kendi klasöründe
+          file: ./frontend/Dockerfile
           push: true
           tags: ${{ env.FRONTEND_IMAGE }}
 
+  # 4. Sunucuya Bağlanıp Konteynerleri Güncelle
   deploy:
-    needs: build-and-push
+    needs: [detect-changes, build-backend, build-frontend]
+    if: always() && (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to VPS via SSH
+      - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -56,32 +91,36 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
-            echo "--- GHCR Login ---"
+            echo "Logging into GitHub Container Registry..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo "--- Pulling latest images ---"
-            docker pull ${{ env.BACKEND_IMAGE }}
-            docker pull ${{ env.FRONTEND_IMAGE }}
+            # Backend güncellendiyse konteyneri yenile
+            if [ "${{ needs.build-backend.result }}" == "success" ]; then
+              echo "Updating Backend Container..."
+              docker pull ${{ env.BACKEND_IMAGE }}
+              docker rm -f nestify || true
+              docker run -d \
+                --name nestify \
+                --network nestify-net \
+                --restart unless-stopped \
+                -p 3001:8080 \
+                -e SPRING_DATASOURCE_URL="jdbc:postgresql://nestify-db:5432/nestify" \
+                -e SPRING_DATASOURCE_USERNAME="postgres" \
+                -e SPRING_DATASOURCE_PASSWORD="nestify_sifre123" \
+                ${{ env.BACKEND_IMAGE }}
+            fi
 
-            echo "--- Recreating Backend Container ---"
-            docker rm -f nestify || true
-            docker run -d \
-              --name nestify \
-              --network nestify-net \
-              --restart unless-stopped \
-              -p 3001:8080 \
-              -e SPRING_DATASOURCE_URL="jdbc:postgresql://nestify-db:5432/nestify" \
-              -e SPRING_DATASOURCE_USERNAME="postgres" \
-              -e SPRING_DATASOURCE_PASSWORD="nestify_sifre123" \
-              ${{ env.BACKEND_IMAGE }}
+            # Frontend güncellendiyse konteyneri yenile
+            if [ "${{ needs.build-frontend.result }}" == "success" ]; then
+              echo "Updating Frontend Container..."
+              docker pull ${{ env.FRONTEND_IMAGE }}
+              docker rm -f nestify-frontend || true
+              docker run -d \
+                --name nestify-frontend \
+                --network nestify-net \
+                --restart unless-stopped \
+                -p 3002:80 \
+                ${{ env.FRONTEND_IMAGE }}
+            fi
 
-            echo "--- Recreating Frontend Container ---"
-            docker rm -f nestify-frontend || true
-            docker run -d \
-              --name nestify-frontend \
-              --network nestify-net \
-              --restart unless-stopped \
-              -p 3002:80 \
-              ${{ env.FRONTEND_IMAGE }}
-
-            echo "--- Deployment Finished Successfully! ---"
+            echo "Deployment completed successfully!"
