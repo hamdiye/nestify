@@ -93,7 +93,12 @@ jobs:
   # 4. Sunucuya Bağlanıp Konteynerleri Güncelle
   deploy:
     needs: [detect-changes, build-backend, build-frontend]
-    if: always() && needs.build-backend.result == 'success' && needs.build-frontend.result == 'success'
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Deploy on VPS
