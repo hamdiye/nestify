@@ -12,7 +12,8 @@ import java.util.Arrays;
  * Global CORS configuration.
  * Configures allowed origins for cross-origin requests to the backend API.
  */
-@Configuration
+// @Configuration — SecurityConfig içindeki CORS konfigürasyonu kullanıldığından bu sınıf devre dışı bırakıldı.
+// WebMvcConfigurer CORS'u Spring Security CORS filtresinden sonra devreye girdiği için çakışmaya neden oluyordu.
 public class CorsConfig {
 
     @Value("${cors.allowed-origins:http://localhost:5173,https://nestify.hamdiyecicek.tech}")
