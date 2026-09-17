@@ -51,7 +51,6 @@ public class UserServiceTest {
 		when(userMapper.toGetUserByIdResponseDto(user)).thenReturn(userResponseDto);
 
 		GetUserByIdResponseDto actualResult = userService.getUserById(1L);
-
 		assertNotNull(actualResult);
 		assertEquals(userResponseDto.getId(), actualResult.getId());
 		assertEquals(userResponseDto.getEmail(), actualResult.getEmail());
