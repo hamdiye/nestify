@@ -57,7 +57,8 @@ public class SecurityConfig {
 				"Origin",
 				"X-Requested-With",
 				"Access-Control-Request-Method",
-				"Access-Control-Request-Headers"));
+				"Access-Control-Request-Headers",
+				"X-Acting-User-Id"));
 		config.setExposedHeaders(List.of("Authorization", "Content-Type"));
 		config.setAllowCredentials(true);
 		config.setMaxAge(3600L);
