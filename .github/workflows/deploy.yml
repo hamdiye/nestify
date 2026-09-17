@@ -24,6 +24,7 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
+              - '.github/workflows/**'
             backend:
               - 'src/**'
               - 'pom.xml'
