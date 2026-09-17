@@ -45,7 +45,7 @@ public class UserServiceTest {
 
 		GetUserByIdResponseDto userResponseDto = new GetUserByIdResponseDto();
 		userResponseDto.setId(1L);
-		userResponseDto.setEmail("yanlis@gmail.com");
+		userResponseDto.setEmail("test@gmail.com");
 
 		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 		when(userMapper.toGetUserByIdResponseDto(user)).thenReturn(userResponseDto);
