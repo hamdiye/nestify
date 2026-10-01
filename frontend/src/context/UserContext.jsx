@@ -1,20 +1,36 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { setActingUserId } from '../api/api';
+import { setActingUserId, setAuthToken } from '../api/api';
 
 const UserContext = createContext(null);
 
 export function UserProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('nestify_user')); }
-    catch { return null; }
+    try {
+      const stored = localStorage.getItem('nestify_user');
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (user?.token) {
+          setAuthToken(user.token);
+        }
+        if (user?.id) {
+          setActingUserId(user.id);
+        }
+        return user;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
     if (currentUser) {
       setActingUserId(currentUser.id);
+      setAuthToken(currentUser.token);
       localStorage.setItem('nestify_user', JSON.stringify(currentUser));
     } else {
       setActingUserId(null);
+      setAuthToken(null);
       localStorage.removeItem('nestify_user');
     }
   }, [currentUser]);
@@ -31,9 +47,19 @@ export function UserProvider({ children }) {
       token: authResponse.accessToken ?? null,
     };
     setCurrentUser(user);
+    if (user.token) {
+      setAuthToken(user.token);
+    }
+    if (user.id) {
+      setActingUserId(user.id);
+    }
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = () => {
+    setCurrentUser(null);
+    setAuthToken(null);
+    setActingUserId(null);
+  };
 
   return (
     <UserContext.Provider value={{ currentUser, login, logout }}>
