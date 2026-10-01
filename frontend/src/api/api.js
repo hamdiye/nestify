@@ -34,11 +34,6 @@ api.interceptors.request.use((config) => {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // 2. Geriye dönük uyumluluk için actingUserId varsa ekle
-  if (actingUserId) {
-    config.headers['X-Acting-User-Id'] = actingUserId;
-  }
-
   return config;
 });
 
