@@ -8,8 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +19,8 @@ import com.nestify.dataAccess.UserRepository;
 import com.nestify.dataTransferObject.request.SaveUserRequestDto;
 import com.nestify.dataTransferObject.response.GetUserByIdResponseDto;
 import com.nestify.entities.User;
+import com.nestify.helpers.UserServiceHelper;
+import com.nestify.mapper.HouseMapper;
 import com.nestify.mapper.UserMapper;
 import com.nestify.policies.UserPolicy;
 
@@ -30,6 +30,10 @@ public class UserServiceTest {
 	private UserRepository userRepository;
 	@Mock
 	private PasswordEncoder passwordEncoder;
+	@Mock
+	private UserServiceHelper userServiceHelper;
+	@Mock
+	private HouseMapper houseMapper;
 	@Mock
 	private UserMapper userMapper;
 	@Mock
@@ -47,7 +51,7 @@ public class UserServiceTest {
 		userResponseDto.setId(1L);
 		userResponseDto.setEmail("test@gmail.com");
 
-		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+		when(userServiceHelper.getUserOrThrow(1L)).thenReturn(user);
 		when(userMapper.toGetUserByIdResponseDto(user)).thenReturn(userResponseDto);
 
 		GetUserByIdResponseDto actualResult = userService.getUserById(1L);
@@ -58,7 +62,8 @@ public class UserServiceTest {
 
 	@Test
 	public void getUserById_whenUserDoesNotExist_shouldThrowRuntimeException() {
-		when(userRepository.findById(1L)).thenReturn(Optional.empty());
+		when(userServiceHelper.getUserOrThrow(1L))
+        .thenThrow(new RuntimeException("Kullanıcı bulunamadı: 1"));
 
 		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
 			userService.getUserById(1L);
