@@ -9,14 +9,14 @@ import com.nestify.entities.EventCategory;
 public class EventCategoryMapper {
 	public GetEventCategoryResponseDto toGetEventCategoryResponseDto(EventCategory eventCategory) {
 		if (eventCategory == null) {
-            return null;
+			return null;
         }
 		return new GetEventCategoryResponseDto(
-				eventCategory.getId(),
-				eventCategory.getHouse().getId(),
-				eventCategory.getTitle(),
-				eventCategory.getDescription(),
-				eventCategory.getColorCode()
-				);
+			eventCategory.getId(),
+			eventCategory.getHouse().getId(),
+			eventCategory.getTitle(),
+			eventCategory.getDescription(),
+			eventCategory.getColorCode()
+		);
 	}
 }

@@ -3,6 +3,7 @@ package com.nestify.business;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.nestify.core.JwtService;
 import com.nestify.dataTransferObject.request.LoginRequestDto;
 import com.nestify.dataTransferObject.response.AuthResponseDto;
 import com.nestify.entities.User;
@@ -16,6 +17,7 @@ public class AuthManager implements AuthService {
 
 	private final PasswordEncoder passwordEncoder;
 	private final UserServiceHelper userServiceHelper;
+	private final JwtService jwtService;
 
 	@Override
 	public AuthResponseDto login(LoginRequestDto loginDto) {
@@ -25,7 +27,10 @@ public class AuthManager implements AuthService {
 			throw new RuntimeException("E-posta veya şifre hatalı.");
 		}
 
+		String token = jwtService.generateToken(user);
+		
 		return AuthResponseDto.builder()
+				.accessToken(token)
 				.userId(user.getId())
 				.email(user.getEmail())
 				.fullName(user.getName())

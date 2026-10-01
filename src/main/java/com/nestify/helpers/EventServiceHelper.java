@@ -14,6 +14,6 @@ public class EventServiceHelper {
 	
 	public Event getEventOrThrow(Long eventId) {
 		return eventRepository.findById(eventId)
-									  .orElseThrow(() -> new RuntimeException("Event bulunamadı!"));
+							  .orElseThrow(() -> new RuntimeException("Event bulunamadı!"));
 	}
 }

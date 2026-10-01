@@ -2,6 +2,8 @@ package com.nestify.dataTransferObject.response;
 
 import java.time.LocalDateTime;
 
+import com.nestify.entities.enums.MemberRole;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,15 +11,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class GetAllUserResponseDto {
-
+@NoArgsConstructor
+public class HouseMemberResponseDto {
 	private Long id;
 	private String name;
 	private String email;
-	private LocalDateTime createdAt;
-	private LocalDateTime updatedAt;
+	private LocalDateTime joinedAt;
 	
-	
+	private MemberRole memberRole;
 }

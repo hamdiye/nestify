@@ -4,46 +4,50 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-	/**
-	 * Configures the HTTP security filter chain.
-	 *
-	 * @param http HttpSecurity configuration builder
-	 * @return Configured SecurityFilterChain instance
-	 * @throws Exception if an error occurs during security chain configuration
-	 */
+	private final JwtAuthenticationFilter jwtAuthFilter;
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-				.cors(cors -> cors.configurationSource(corsConfigurationSource())) // <-- CORS burada aktif edilmeli
-				.csrf(csrf -> csrf.disable()) // Stateless REST API için kapatılır
+				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+				.csrf(csrf -> csrf.disable())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.anyRequest().permitAll());
-
+						.requestMatchers("/api/v1/auth/**").permitAll() // Login herkese açık
+						.requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll() // Yeni üye kaydı herkese açık
+						.requestMatchers(
+								"/swagger-ui/**",
+								"/swagger-ui.html",
+								"/v3/api-docs/**"
+						).permitAll() // Swagger dokümantasyonu herkese açık
+						.anyRequest().authenticated() // DİĞER TÜM İSTEKLER TOKEN ZORUNLU!
+				)
+				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
 
-	/**
-	 * Configures CORS settings for the application.
-	 *
-	 * @return CorsConfigurationSource instance with registered CORS rules
-	 */
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		// Domaininizin sonuna slash (/) koymadan ekleyin:
 		config.setAllowedOrigins(List.of(
 				"https://nestify.hamdiyecicek.tech",
 				"http://localhost",
@@ -57,22 +61,15 @@ public class SecurityConfig {
 				"Origin",
 				"X-Requested-With",
 				"Access-Control-Request-Method",
-				"Access-Control-Request-Headers",
-				"X-Acting-User-Id"));
+				"Access-Control-Request-Headers"));
 		config.setExposedHeaders(List.of("Authorization", "Content-Type"));
 		config.setAllowCredentials(true);
 		config.setMaxAge(3600L);
-
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);
 		return source;
 	}
 
-	/**
-	 * Configures and provides the BCrypt password encoder bean.
-	 *
-	 * @return PasswordEncoder instance using BCrypt hashing algorithm
-	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();

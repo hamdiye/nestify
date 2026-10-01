@@ -22,16 +22,12 @@ public class UserServiceHelper {
 				.orElseThrow(() -> new RuntimeException("Email bulunamadı: " + email));
     }
     
-    public Boolean emailIsExist(String email) {
-    	return userRepository.findByEmail(email).isPresent();
+    public void emailIsAlreadyInUse(String email) {
+    	if (userRepository.existsByEmail(email)) {
+			throw new RuntimeException("Bu email adresi zaten kullanımda!");
+		}
     }
 
-    /**
-     * Checks whether the given user is a member of at least one house.
-     *
-     * @param userId the ID of the user to check
-     * @return true if the user has at least one house membership, false otherwise
-     */
     public boolean isUserMemberOfAnyHouse(Long userId) {
         return userRepository.existsByIdAndHouseMembershipsIsNotEmpty(userId);
     }

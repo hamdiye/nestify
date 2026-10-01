@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nestify.business.UserService;
 import com.nestify.dataTransferObject.request.SaveUserRequestDto;
 import com.nestify.dataTransferObject.request.UpdateUserRequestDto;
-import com.nestify.dataTransferObject.response.GetAllUserResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
 import com.nestify.dataTransferObject.response.GetUserByIdResponseDto;
 
@@ -29,13 +28,13 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UserController {
 
-	private UserService userService;
+	private final UserService userService;
 
 	@GetMapping
-	public ResponseEntity<Page<GetAllUserResponseDto>> getUsers(@RequestParam(defaultValue = "0") Integer page,
+	public ResponseEntity<Page<GetUserByIdResponseDto>> getUsers(@RequestParam(defaultValue = "0") Integer page,
 			@RequestParam(defaultValue = "asc") String sortDirection, @RequestParam(defaultValue = "10") Integer size,
 			@RequestParam(defaultValue = "id") String sortBy) {
-		Page<GetAllUserResponseDto> users = userService.getUsers(page, sortDirection, size, sortBy);
+		Page<GetUserByIdResponseDto> users = userService.getUsers(page, sortDirection, size, sortBy);
 		return ResponseEntity.ok(users);
 	}
 
@@ -49,18 +48,18 @@ public class UserController {
 		return userService.getHousesOfUser(id);
 	}
 
-	@PostMapping("/add")
+	@PostMapping
 	public GetUserByIdResponseDto addUser(@Valid @RequestBody SaveUserRequestDto userSaveRequestDto) {
 		return userService.saveUser(userSaveRequestDto);
 	}
 
-	@PutMapping("/update/{id}")
+	@PutMapping("/{id}")
 	public GetUserByIdResponseDto updateUser(@PathVariable Long id,
 			@Valid @RequestBody UpdateUserRequestDto userUpdateRequestDto) {
 		return userService.updateUser(id, userUpdateRequestDto);
 	}
 
-	@DeleteMapping("/delete/{id}")
+	@DeleteMapping("/{id}")
 	public void deleteUser(@PathVariable Long id) {
 		userService.deleteUser(id);
 	}

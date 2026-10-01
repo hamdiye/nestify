@@ -2,6 +2,9 @@ package com.nestify.dataTransferObject.request;
 
 import com.nestify.entities.enums.NeedStatus;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,10 +15,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateHouseNeedRequestDto {
-	private Long id;
+	@NotBlank(message = "Başlık boş olamaz")
+	@Size(max = 100, message = "Başlık en fazla 100 karakter olabilir")
 	private String title;
 	private String description;
-    private Long createdById;
-    private Long houseId;
-    private NeedStatus status;
+	@NotNull(message = "Durum belirtilmeli")
+	private NeedStatus status;
 }

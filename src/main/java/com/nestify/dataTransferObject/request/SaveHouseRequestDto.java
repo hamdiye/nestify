@@ -1,19 +1,16 @@
 package com.nestify.dataTransferObject.request;
 
-import java.util.Set;
-
-import com.nestify.dataTransferObject.response.UserSummaryForHouseDto;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SaveHouseRequestDto {
-	private Long userId;
 	private String title;
 	private String address;
 	private String city;
-	
-	private Set<UserSummaryForHouseDto> members;
 }

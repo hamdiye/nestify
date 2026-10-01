@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nestify.dataAccess.EventRepository;
-import com.nestify.dataTransferObject.request.DeleteEventRequestDto;
 import com.nestify.dataTransferObject.request.SaveEventRequestDto;
 import com.nestify.dataTransferObject.request.UpdateEventRequestDto;
 import com.nestify.dataTransferObject.response.GetEventByIdResponseDto;
@@ -19,13 +18,14 @@ import com.nestify.helpers.EventServiceHelper;
 import com.nestify.helpers.HouseServiceHelper;
 import com.nestify.helpers.UserServiceHelper;
 import com.nestify.mapper.EventMapper;
+import com.nestify.policies.EventCategoryPolicy;
 import com.nestify.policies.EventPolicy;
 
 import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class EventManager implements EventService{
+public class EventManager implements EventService {
 	private final EventRepository eventRepository;
 	private final EventServiceHelper eventServiceHelper;
 	private final EventMapper eventMapper;
@@ -33,48 +33,43 @@ public class EventManager implements EventService{
 	private final HouseServiceHelper houseServiceHelper;
 	private final UserServiceHelper userServiceHelper;
 	private final EventCategoryServiceHelper eventCategoryServiceHelper;
+	private final EventCategoryPolicy eventCategoryPolicy;
 
 	@Override
 	public List<GetEventByIdResponseDto> getEventsFromHouse(Long houseId, Long actingUserId) {
 		House house = houseServiceHelper.getHouseOrThrow(houseId);
 		eventPolicy.validateEventOperation(house, actingUserId);
 		
-		List<GetEventByIdResponseDto> events = house.getEvents()
+		List<GetEventByIdResponseDto> events =  eventRepository.findByHouseId(houseId)
 													.stream()
-													.map(event -> eventMapper.toGetEventByIdResponseDto(event))
+													.map(eventMapper::toGetEventByIdResponseDto)
 													.toList();
 		return events;
 	}
 
-	/**
-	 * Adds a new event to a house. If eventCategoryId is null, a default category is assigned.
-	 *
-	 * @param eventRequestDto DTO containing event creation details
-	 * @return response DTO of the created event
-	 */
 	@Override
 	@Transactional
-	public GetEventByIdResponseDto addEvent(SaveEventRequestDto eventRequestDto) {
-		eventPolicy.validateEventCreation(eventRequestDto.getAssignedUserId());
+	public GetEventByIdResponseDto addEvent(Long houseId, Long actingUserId, SaveEventRequestDto eventRequestDto) {
+		House house = houseServiceHelper.getHouseOrThrow(houseId);
+		eventPolicy.validateEventOperation(house, actingUserId);
+		eventPolicy.validateEventOperation(house, eventRequestDto.getAssignedUserId());
 
 		User user = userServiceHelper.getUserOrThrow(eventRequestDto.getAssignedUserId());
-		House house = houseServiceHelper.getHouseOrThrow(eventRequestDto.getHouseId());
-		
+
 		EventCategory eventCategory;
 		if (eventRequestDto.getEventCategoryId() != null) {
 			eventCategory = eventCategoryServiceHelper.getEventCategoryOrThrow(eventRequestDto.getEventCategoryId());
 		} else {
 			eventCategory = eventCategoryServiceHelper.getOrCreateDefaultCategory(house);
 		}
+		eventCategoryPolicy.validateEventCategoryBelogsToHouse(eventCategory, houseId);
 
-		eventPolicy.validateEventOperation(house, eventRequestDto.getAssignedUserId());
-		
 		Event event = new Event();
 		event.setTitle(eventRequestDto.getTitle());
 		event.setDescription(eventRequestDto.getDescription());
-		event.setStartedDate(eventRequestDto.getStartedDate());
-		event.setEndDate(eventRequestDto.getEndDate());
-		event.setIsAllDay(eventRequestDto.getIsAllDay());
+		event.setStartDateTime(eventRequestDto.getStartedDate());
+		event.setEndDateTime(eventRequestDto.getEndDate());
+		event.setAllDay(eventRequestDto.getIsAllDay());
 		event.setLocation(eventRequestDto.getLocation());
 		event.setAssignedUser(user);
 		event.setHouse(house);
@@ -85,20 +80,17 @@ public class EventManager implements EventService{
 		return eventMapper.toGetEventByIdResponseDto(savedEvent);
 	}
 
-	/**
-	 * Updates an existing event. If eventCategoryId is null, existing category is retained or default assigned.
-	 *
-	 * @param eventId ID of the event to update
-	 * @param eventRequestDto DTO containing updated event details
-	 * @return response DTO of the updated event
-	 */
 	@Override
 	@Transactional
-	public GetEventByIdResponseDto updateEvent(Long eventId, UpdateEventRequestDto eventRequestDto) {
-		User user = userServiceHelper.getUserOrThrow(eventRequestDto.getAssignedUserId());
-		House house = houseServiceHelper.getHouseOrThrow(eventRequestDto.getHouseId());
-		
+	public GetEventByIdResponseDto updateEvent(Long houseId, Long eventId, Long actingUserId, UpdateEventRequestDto eventRequestDto) {
 		Event event = eventServiceHelper.getEventOrThrow(eventId);
+		eventPolicy.validateEventBelogsToHouse(event, houseId);
+				
+		House house = houseServiceHelper.getHouseOrThrow(houseId);
+		eventPolicy.validateEventOperation(house, actingUserId);
+		eventPolicy.validateEventOperation(house, eventRequestDto.getAssignedUserId());
+
+		User user = userServiceHelper.getUserOrThrow(eventRequestDto.getAssignedUserId());
 
 		EventCategory eventCategory;
 		if (eventRequestDto.getEventCategoryId() != null) {
@@ -108,14 +100,13 @@ public class EventManager implements EventService{
 		} else {
 			eventCategory = eventCategoryServiceHelper.getOrCreateDefaultCategory(house);
 		}
-
-		eventPolicy.validateEventOperation(house, eventRequestDto.getAssignedUserId());
+		eventCategoryPolicy.validateEventCategoryBelogsToHouse(eventCategory, houseId);
 		
 		event.setTitle(eventRequestDto.getTitle());
 		event.setDescription(eventRequestDto.getDescription());
-		event.setStartedDate(eventRequestDto.getStartedDate());
-		event.setEndDate(eventRequestDto.getEndDate());
-		event.setIsAllDay(eventRequestDto.getIsAllDay());
+		event.setStartDateTime(eventRequestDto.getStartedDate());
+		event.setEndDateTime(eventRequestDto.getEndDate());
+		event.setAllDay(eventRequestDto.getIsAllDay());
 		event.setLocation(eventRequestDto.getLocation());
 		event.setAssignedUser(user);
 		event.setHouse(house);
@@ -127,16 +118,14 @@ public class EventManager implements EventService{
 	}
 
 	@Override
-	public void deleteEvent(DeleteEventRequestDto eventRequestDto) {
-		House house = houseServiceHelper.getHouseOrThrow(eventRequestDto.getHouseId());
-		Event event = eventServiceHelper.getEventOrThrow(eventRequestDto.getEventId());
-
-		eventPolicy.validateEventOperation(house, eventRequestDto.getUserId());
+	public void deleteEvent(Long houseId, Long eventId, Long actingUserId) {
+		Event event = eventServiceHelper.getEventOrThrow(eventId);
+		eventPolicy.validateEventBelogsToHouse(event, houseId);
 		
+		House house = event.getHouse();
+		eventPolicy.validateEventOperation(house, actingUserId);
 		
 		eventRepository.delete(event);
 		
 	}
-	
-	
 }

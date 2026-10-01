@@ -10,12 +10,10 @@ import com.nestify.dataAccess.HouseRepository;
 import com.nestify.dataTransferObject.request.AddUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.ChangeMemberRoleRequestDto;
 import com.nestify.dataTransferObject.request.JoinHouseByInviteCodeRequestDto;
-import com.nestify.dataTransferObject.request.RemoveUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.SaveHouseRequestDto;
 import com.nestify.dataTransferObject.request.UpdateHouseRequestDto;
-import com.nestify.dataTransferObject.response.GetAllHouseResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
-import com.nestify.dataTransferObject.response.UserSummaryForHouseDto;
+import com.nestify.dataTransferObject.response.HouseMemberResponseDto;
 import com.nestify.entities.EventCategory;
 import com.nestify.entities.House;
 import com.nestify.entities.HouseMember;
@@ -40,16 +38,11 @@ public class HouseManager implements HouseService {
 	private final UserMapper userMapper;
 	private final HousePolicy housePolicy;
 
-	/**
-	 * Creates a new house, assigns the creator as ADMIN, and creates a default category.
-	 *
-	 * @param houseDto DTO containing house attributes and creator user ID
-	 * @return Created house details DTO
-	 */
 	@Override
 	@Transactional
-	public GetHouseByIdResponseDto addHouse(SaveHouseRequestDto houseDto) {
-		User user = userHelper.getUserOrThrow(houseDto.getUserId());
+	public GetHouseByIdResponseDto addHouse(Long actingUserId, 
+			SaveHouseRequestDto houseDto) {
+		User user = userHelper.getUserOrThrow(actingUserId);
 
 		House house = new House();
 		house.setAddress(houseDto.getAddress());
@@ -71,11 +64,10 @@ public class HouseManager implements HouseService {
 	}
 
 	@Override
-	public List<GetAllHouseResponseDto> getHouses() {
+	public List<GetHouseByIdResponseDto> getHouses() {
 		List<House> houses = houseRepository.findAll();
-		List<GetAllHouseResponseDto> houseDtos = houses.stream()
-				.map(house -> houseMapper.toGetAllHouseResponseDto(house)).toList();
-		return houseDtos;
+		return houses.stream()
+				.map(houseMapper::toGetHouseByIdResponseDto).toList();
 	}
 
 	@Override
@@ -85,23 +77,17 @@ public class HouseManager implements HouseService {
 	}
 
 	@Override
-	public GetHouseByIdResponseDto updateHouse(Long id, UpdateHouseRequestDto houseDto) {
-		User user = userHelper.getUserOrThrow(houseDto.getUserId());
-
+	public GetHouseByIdResponseDto updateHouse(Long id, 
+			Long actingUserId, 
+			UpdateHouseRequestDto houseDto) {
+		User user = userHelper.getUserOrThrow(actingUserId);
 		House house = houseHelper.getHouseOrThrow(id);
-
 		HouseMember houseMember = houseHelper.getHouseMember(house, user.getId());
-
-		if (!houseMember.isAdmin()) {
-			throw new RuntimeException("Ev bilgilerini güncellemek için ADMIN yetkisi gereklidir!");
-		}
-
+		housePolicy.validateAdminAuthority(houseMember);
 		house.setAddress(houseDto.getAddress());
 		house.setCity(houseDto.getCity());
 		house.setTitle(houseDto.getTitle());
-
 		House savedHouse = houseRepository.save(house);
-
 		return houseMapper.toGetHouseByIdResponseDto(savedHouse);
 	}
 
@@ -113,113 +99,68 @@ public class HouseManager implements HouseService {
 	}
 
 	@Override
-	public List<UserSummaryForHouseDto> getUsersOfHouse(Long houseId) {
-		House house = houseHelper.getHouseOrThrow(houseId);
-		List<UserSummaryForHouseDto> members = house.getMembers()
-				.stream()
-				.map(member -> userMapper.toUserSummaryForHouseDto(member.getUser(), member))
-				.toList();
+	public List<HouseMemberResponseDto> getUsersOfHouse(Long houseId) {
+		House house = houseHelper.getHouseWithMembersOrThrow(houseId);
+		List<HouseMemberResponseDto> members = house.getMembers()
+													.stream()
+													.map(member -> userMapper.toUserSummaryForHouseDto(member.getUser(), member))
+													.toList();
 		return members;
 	}
 
-	/**
-	 * Adds a user to an existing house by an acting admin member.
-	 *
-	 * @param houseId The ID of the target house
-	 * @param addUserToHouseDto DTO containing user ID and assigned role
-	 * @param actingUserId ID of the user performing the operation
-	 * @return Updated house details DTO
-	 */
 	@Override
 	@Transactional
-	public GetHouseByIdResponseDto addMemberToHouse(Long houseId, AddUserToHouseRequestDto addUserToHouseDto,
+	public GetHouseByIdResponseDto addMemberToHouse(Long houseId, 
+			AddUserToHouseRequestDto addUserToHouseDto,
 			Long actingUserId) {
 		House house = houseHelper.getHouseOrThrow(houseId);
 		User user = userHelper.getUserOrThrow(addUserToHouseDto.getUserId());
 		HouseMember actingMember = houseHelper.getHouseMember(house, actingUserId);
-
 		housePolicy.validateMemberAddition(house, user.getId(), actingMember);
-
-		house.addMember(user, addUserToHouseDto.getRole());
+		house.addMember(user, addUserToHouseDto.getMemberRole());
 		House savedHouse = houseRepository.save(house);
 		return houseMapper.toGetHouseByIdResponseDto(savedHouse);
 	}
 
-	/**
-	 * Adds an acting user to a house using a valid invite code.
-	 *
-	 * @param joinHouseRequestDto DTO containing the invite code
-	 * @param actingUserId ID of the user joining the house
-	 * @return Updated house details DTO
-	 */
 	@Override
 	@Transactional
 	public GetHouseByIdResponseDto addMemberToHouseByInviteCode(JoinHouseByInviteCodeRequestDto joinHouseRequestDto,
 			Long actingUserId) {
 		House house = houseHelper.getHouseOrThrowByInviteCode(joinHouseRequestDto.getInviteCode());
 		User user = userHelper.getUserOrThrow(actingUserId);
-		
 		housePolicy.validateMemberIncludeHouse(house, user.getId());
-		
 		house.addMember(user, MemberRole.MEMBER);
 		House savedHouse = houseRepository.save(house);
 		return houseMapper.toGetHouseByIdResponseDto(savedHouse);
 	}
 	
-	/**
-	 * Removes a member from a house or allows a member to leave the house.
-	 *
-	 * @param houseId The ID of the house
-	 * @param removeUserToHouseDto DTO containing the target user ID to remove
-	 * @param actingUserId ID of the user performing the removal or self-removal
-	 * @return Updated house details DTO
-	 */
 	@Override
 	@Transactional
-	public GetHouseByIdResponseDto removeMemberToHouse(Long houseId, RemoveUserToHouseRequestDto removeUserToHouseDto,
+	public GetHouseByIdResponseDto removeMemberFromHouse(Long houseId, 
+			Long userId,
 			Long actingUserId) {
 		House house = houseHelper.getHouseOrThrow(houseId);
-		User targetUser = userHelper.getUserOrThrow(removeUserToHouseDto.getUserId());
+		User targetUser = userHelper.getUserOrThrow(userId);
 		HouseMember actingMember = houseHelper.getHouseMember(house, actingUserId);
-
 		housePolicy.validateMemberRemoval(house, targetUser.getId(), actingMember);
-
 		house.removeMember(targetUser);
 		House savedHouse = houseRepository.save(house);
 
 		return houseMapper.toGetHouseByIdResponseDto(savedHouse);
 	}
 
-	/**
-	 * Changes the membership role of a user in a house.
-	 *
-	 * @param houseId The ID of the house
-	 * @param userId The ID of the target user
-	 * @param changeMemberRoleDto DTO containing the new role
-	 * @param actingUserId ID of the acting admin user
-	 * @return UserSummaryForHouseDto of the updated member
-	 */
 	@Override
 	@Transactional
-	public UserSummaryForHouseDto changeMemberRole(Long houseId, Long userId,
+	public HouseMemberResponseDto changeMemberRole(Long houseId, 
+			Long userId,
 			ChangeMemberRoleRequestDto changeMemberRoleDto, Long actingUserId) {
 		House house = houseHelper.getHouseOrThrow(houseId);
-		User targetUser = userHelper.getUserOrThrow(changeMemberRoleDto.getUserId());
+		User targetUser = userHelper.getUserOrThrow(userId);
 		HouseMember actingMember = houseHelper.getHouseMember(house, actingUserId);
-
 		housePolicy.validateChangeMemberRole(house, targetUser.getId(), actingMember);
-
 		HouseMember targetMember = houseHelper.getHouseMember(house, targetUser.getId());
-		targetMember.setMemberRole(changeMemberRoleDto.getRole());
+		targetMember.setMemberRole(changeMemberRoleDto.getMemberRole());
 
-		return new UserSummaryForHouseDto(
-				targetUser.getId(),
-				targetUser.getName(),
-				targetUser.getEmail(),
-				targetMember.getJoinedAt(),
-				targetMember.getMemberRole());
+		return userMapper.toUserSummaryForHouseDto(targetUser, targetMember);
 	}
-
-
-
 }

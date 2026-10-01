@@ -32,49 +32,50 @@ public class House {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
 	@Column(name = "title", nullable = false)
 	private String title;
+	
 	@Column(name = "address")
 	private String address;
+	
 	@Column(name = "city")
 	private String city;
-	@Column(name = "invite_code", nullable = false)
+	
+	@Column(name = "invite_code", unique = true, nullable = false)
 	private String inviteCode;
-	@Column(name = "createdAt")
+	
+	@Column(name = "created_at")
 	private LocalDateTime createdAt;
-	@Column(name = "updatedAt")
+	
+	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
+	
 	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<HouseMember> members = new HashSet<>();
+	
 	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<EventCategory> eventCategories = new HashSet<>();
+	
 	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Event> events = new HashSet<>();
+	
 	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<HouseNeed> houseNeeds = new HashSet<>();
+	
+	@OneToMany(mappedBy = "house", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<Transaction> houseTransactions = new HashSet<>();
 
-	/**
-	 * Sets the creation timestamp before the house entity is persisted.
-	 */
 	@PrePersist
 	protected void onCreate() {
 		this.createdAt = LocalDateTime.now();
 	}
 
-	/**
-	 * Updates the modification timestamp before the house entity is updated.
-	 */
 	@PreUpdate
 	protected void onUpdate() {
 		this.updatedAt = LocalDateTime.now();
 	}
 
-	/**
-	 * Adds a user as a member to this house with the designated role.
-	 *
-	 * @param user The user joining the house
-	 * @param role The role assigned to the member
-	 */
 	public void addMember(User user, MemberRole role) {
 		HouseMember houseMember = new HouseMember();
 		houseMember.setHouse(this);
@@ -84,11 +85,6 @@ public class House {
 		this.members.add(houseMember);
 	}
 
-	/**
-	 * Removes a user from this house's membership list by matching user ID.
-	 *
-	 * @param user The user to be removed
-	 */
 	public void removeMember(User user) {
 		if (user == null || user.getId() == null) {
 			return;
@@ -106,11 +102,6 @@ public class House {
 		}
 	}
 
-	/**
-	 * Associates an event category with this house.
-	 *
-	 * @param category The event category to associate with this house
-	 */
 	public void addEventCategory(EventCategory category) {
 		category.setHouse(this);
 		this.eventCategories.add(category);

@@ -34,31 +34,27 @@ public class HouseMember {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "house_id", nullable = false)
 	private House house;
+	
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(name="member_role", nullable = false)
 	private MemberRole memberRole;
+	
 	@Column(name = "joined_at")
 	private LocalDateTime joinedAt;
 
-	/**
-	 * Sets the join timestamp before the membership entity is persisted.
-	 */
 	@PrePersist
 	protected void onJoin() {
 		this.joinedAt = LocalDateTime.now();
 	}
 
-	/**
-	 * Checks whether this member has the ADMIN role.
-	 *
-	 * @return true if member role is ADMIN, false otherwise
-	 */
 	public boolean isAdmin() {
 		return this.memberRole == MemberRole.ADMIN;
 	}
@@ -80,7 +76,10 @@ public class HouseMember {
 
 	@Override
 	public int hashCode() {
-		return getClass().hashCode();
+		return java.util.Objects.hash(
+		        house != null ? house.getId() : null,
+		        user  != null ? user.getId()  : null
+		    );
 	}
 
 }

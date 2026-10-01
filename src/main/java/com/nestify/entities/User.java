@@ -4,9 +4,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,38 +29,30 @@ public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
+	
 	@Column(name = "name")
 	private String name;
-
+	
 	@Column(name = "email")
 	private String email;
-
+	
 	@Column(name = "password")
 	private String password;
-
-	@CreatedDate
+	
 	@Column(name = "createdAt")
 	private LocalDateTime createdAt;
-
-	@LastModifiedDate
+	
 	@Column(name = "updatedAt")
 	private LocalDateTime updatedAt;
-
+	
 	@OneToMany(mappedBy = "user")
 	private Set<HouseMember> houseMemberships = new HashSet<>();
-
-	/**
-	 * Sets the creation timestamp before the entity is persisted.
-	 */
+	
 	@PrePersist
 	protected void onCreate() {
 		this.createdAt = LocalDateTime.now();
 	}
-
-	/**
-	 * Updates the modification timestamp before the entity is updated.
-	 */
+	
 	@PreUpdate
 	protected void onUpdate() {
 		this.updatedAt = LocalDateTime.now();
