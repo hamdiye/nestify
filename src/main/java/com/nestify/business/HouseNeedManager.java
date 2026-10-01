@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.nestify.dataAccess.HouseNeedRepository;
-import com.nestify.dataTransferObject.request.DeleteHouseNeedRequestDto;
 import com.nestify.dataTransferObject.request.SaveHouseNeedRequestDto;
 import com.nestify.dataTransferObject.request.UpdateHouseNeedRequestDto;
 import com.nestify.dataTransferObject.response.GetHouseNeedByIdResponseDto;
@@ -34,19 +33,17 @@ public class HouseNeedManager implements HouseNeedService {
 		House house = houseServiceHelper.getHouseOrThrow(houseId);
 		houseNeedPolicy.validateHouseNeedOperation(house, userId);
 		
-		List<GetHouseNeedByIdResponseDto> houseNeeds = house.getHouseNeeds()
-															.stream()
-															.map(houseNeed -> houseNeedMapper.toGetHouseNeedByIdResponseDto(houseNeed))
-															.toList();
-		return houseNeeds;
+		List<HouseNeed> houseNeeds = houseNeedRepository.findByHouseId(houseId);
+				
+		return houseNeeds.stream()
+	          			 .map(houseNeedMapper::toGetHouseNeedByIdResponseDto)
+	          			 .toList();
 	}
 
 	@Override
-	public GetHouseNeedByIdResponseDto addHouseNeed(SaveHouseNeedRequestDto houseNeedRequest) {
-		houseNeedPolicy.validateHouseNeedCreation(houseNeedRequest.getCreatedById());
-
+	public GetHouseNeedByIdResponseDto addHouseNeed(Long houseId, SaveHouseNeedRequestDto houseNeedRequest) {
 		User user = userServiceHelper.getUserOrThrow(houseNeedRequest.getCreatedById());
-		House house = houseServiceHelper.getHouseOrThrow(houseNeedRequest.getHouseId());
+		House house = houseServiceHelper.getHouseOrThrow(houseId);
 		
 		houseNeedPolicy.validateHouseNeedOperation(house, user.getId());
 		
@@ -63,17 +60,17 @@ public class HouseNeedManager implements HouseNeedService {
 	}
 
 	@Override
-	public GetHouseNeedByIdResponseDto updateHouseNeed(UpdateHouseNeedRequestDto houseNeedRequest) {
-		User user = userServiceHelper.getUserOrThrow(houseNeedRequest.getCreatedById());
-		House house = houseServiceHelper.getHouseOrThrow(houseNeedRequest.getHouseId());
-		
+	public GetHouseNeedByIdResponseDto updateHouseNeed(Long houseNeedId, Long houseId, Long actingUserId, UpdateHouseNeedRequestDto houseNeedRequest) {
+		User user = userServiceHelper.getUserOrThrow(actingUserId);
+		House house = houseServiceHelper.getHouseOrThrow(houseId);
+
 		houseNeedPolicy.validateHouseNeedOperation(house, user.getId());
 		
-		HouseNeed houseNeed = houseNeedServiceHelper.getHouseNeedOrThrow(houseNeedRequest.getId());
+		HouseNeed houseNeed = houseNeedServiceHelper.getHouseNeedOrThrow(houseNeedId);
+		houseNeedPolicy.validateHouseNeedBelogsToHouse(houseNeed, houseId);
+
 		houseNeed.setTitle(houseNeedRequest.getTitle());
 		houseNeed.setDescription(houseNeedRequest.getDescription());
-		houseNeed.setHouse(house);
-		houseNeed.setCreatedBy(user);
 		houseNeed.setStatus(houseNeedRequest.getStatus());
 		
 		HouseNeed savedHouseNeed = houseNeedRepository.save(houseNeed);
@@ -82,14 +79,13 @@ public class HouseNeedManager implements HouseNeedService {
 	}
 
 	@Override
-	public void deleteHouseNeed(DeleteHouseNeedRequestDto houseNeedRequest) {
-		House house = houseServiceHelper.getHouseOrThrow(houseNeedRequest.getHouseId());
-		HouseNeed houseNeed = houseNeedServiceHelper.getHouseNeedOrThrow(houseNeedRequest.getHouseNeedId());
-		houseNeedPolicy.validateHouseNeedOperation(house, houseNeedRequest.getUserId());
+	public void deleteHouseNeed(Long houseNeedId, Long houseId, Long actingUserId) {
+		HouseNeed houseNeed = houseNeedServiceHelper.getHouseNeedOrThrow(houseNeedId);
+		houseNeedPolicy.validateHouseNeedBelogsToHouse(houseNeed, houseId);
+
+		House house = houseServiceHelper.getHouseOrThrow(houseId);
+		houseNeedPolicy.validateHouseNeedOperation(house, actingUserId);
 		
 		houseNeedRepository.delete(houseNeed);
 	}
-
-	
-
 }

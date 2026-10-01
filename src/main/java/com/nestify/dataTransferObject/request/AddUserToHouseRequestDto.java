@@ -2,6 +2,7 @@ package com.nestify.dataTransferObject.request;
 
 import com.nestify.entities.enums.MemberRole;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddUserToHouseRequestDto {
+	@NotNull(message = "Kullanıcı ID'si belirtilmeli")
 	private Long userId;
-	private MemberRole role;
+	@NotNull(message = "Üye rolü belirtilmeli")
+	private MemberRole memberRole;
 }

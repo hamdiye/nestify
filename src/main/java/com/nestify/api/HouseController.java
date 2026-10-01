@@ -2,32 +2,26 @@ package com.nestify.api;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nestify.business.EventCategoryService;
-import com.nestify.business.EventService;
-import com.nestify.business.HouseNeedService;
 import com.nestify.business.HouseService;
+import com.nestify.core.UserPrincipal;
 import com.nestify.dataTransferObject.request.AddUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.ChangeMemberRoleRequestDto;
 import com.nestify.dataTransferObject.request.JoinHouseByInviteCodeRequestDto;
-import com.nestify.dataTransferObject.request.RemoveUserToHouseRequestDto;
 import com.nestify.dataTransferObject.request.SaveHouseRequestDto;
 import com.nestify.dataTransferObject.request.UpdateHouseRequestDto;
-import com.nestify.dataTransferObject.response.GetAllHouseResponseDto;
-import com.nestify.dataTransferObject.response.GetEventByIdResponseDto;
-import com.nestify.dataTransferObject.response.GetEventCategoryResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
-import com.nestify.dataTransferObject.response.GetHouseNeedByIdResponseDto;
-import com.nestify.dataTransferObject.response.UserSummaryForHouseDto;
+import com.nestify.dataTransferObject.response.HouseMemberResponseDto;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -36,18 +30,17 @@ import lombok.AllArgsConstructor;
 @RequestMapping("/api/v1/houses")
 @AllArgsConstructor
 public class HouseController {
-	private HouseService houseService;
-	private EventCategoryService eventCategoryService;
-	private EventService eventService;
-	private HouseNeedService houseNeedService;
-
-	@PostMapping("/add")
-	public GetHouseByIdResponseDto addHouse(@Valid @RequestBody SaveHouseRequestDto houseDto) {
-		return houseService.addHouse(houseDto);
+	
+	private final HouseService houseService;
+	
+	@PostMapping
+	public GetHouseByIdResponseDto addHouse(@AuthenticationPrincipal UserPrincipal currentUser,
+			@Valid @RequestBody SaveHouseRequestDto houseDto) {
+		return houseService.addHouse(currentUser.getId(), houseDto);
 	}
 
 	@GetMapping
-	public List<GetAllHouseResponseDto> getHouses() {
+	public List<GetHouseByIdResponseDto> getHouses() {
 		return houseService.getHouses();
 	}
 
@@ -56,67 +49,48 @@ public class HouseController {
 		return houseService.getHouseById(id);
 	}
 
-	@PutMapping("/update/{id}")
+	@PutMapping("/{id}")
 	public GetHouseByIdResponseDto updateHouse(@PathVariable Long id,
+			@AuthenticationPrincipal UserPrincipal currentUser,
 			@Valid @RequestBody UpdateHouseRequestDto houseDto) {
-		return houseService.updateHouse(id, houseDto);
+		return houseService.updateHouse(id, currentUser.getId(), houseDto);
 	}
 
-	@DeleteMapping("/delete/{id}")
+	@DeleteMapping("/{id}")
 	public void deleteHouse(@PathVariable Long id) {
 		houseService.deleteHouse(id);
 	}
 
 	@GetMapping("/{houseId}/members")
-	public List<UserSummaryForHouseDto> getUsersOfHouse(@PathVariable Long houseId) {
+	public List<HouseMemberResponseDto> getUsersOfHouse(@PathVariable Long houseId) {
 		return houseService.getUsersOfHouse(houseId);
 	}
 
-	@PostMapping("/{houseId}/members/addMember")
+	@PostMapping("/{houseId}/members")
 	public GetHouseByIdResponseDto addMemberToHouse(@PathVariable Long houseId,
 			@Valid @RequestBody AddUserToHouseRequestDto addUserToHouseDto,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return houseService.addMemberToHouse(houseId, addUserToHouseDto, actingUserId);
+			@AuthenticationPrincipal UserPrincipal currentUser) {
+		return houseService.addMemberToHouse(houseId, addUserToHouseDto, currentUser.getId());
 	}
 
-	@PostMapping("/{houseId}/members/addMemberByInviteCode")
+	@PostMapping("/{houseId}/members/join")
 	public GetHouseByIdResponseDto addMemberToHouseByInviteCode(@Valid @RequestBody JoinHouseByInviteCodeRequestDto joinHouseRequestDto,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return houseService.addMemberToHouseByInviteCode(joinHouseRequestDto, actingUserId);
+			@AuthenticationPrincipal UserPrincipal currentUser) {
+		return houseService.addMemberToHouseByInviteCode(joinHouseRequestDto, currentUser.getId());
 	}
 	
-	@PostMapping("/{houseId}/members/removeMember")
-	public GetHouseByIdResponseDto removeMemberToHouse(@PathVariable Long houseId,
-			@Valid @RequestBody RemoveUserToHouseRequestDto removeUserToHouseDto,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return houseService.removeMemberToHouse(houseId, removeUserToHouseDto, actingUserId);
+	@DeleteMapping("/{houseId}/members/{userId}")
+	public GetHouseByIdResponseDto removeMemberFromHouse(@PathVariable Long houseId,
+			@PathVariable Long userId,
+			@AuthenticationPrincipal UserPrincipal currentUser) {
+		return houseService.removeMemberFromHouse(houseId, userId, currentUser.getId());
 	}
 
-	@PostMapping("/{houseId}/members/{userId}/changeRole")
-	public UserSummaryForHouseDto changeMemberRole(@PathVariable Long houseId, @PathVariable Long userId,
+	@PatchMapping("/{houseId}/members/{userId}/role")
+	public HouseMemberResponseDto changeMemberRole(@PathVariable Long houseId, @PathVariable Long userId,
 			@Valid @RequestBody ChangeMemberRoleRequestDto changeMemberRoleDto,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return houseService.changeMemberRole(houseId, userId, changeMemberRoleDto, actingUserId);
+			@AuthenticationPrincipal UserPrincipal currentUser) {
+		return houseService.changeMemberRole(houseId, userId, changeMemberRoleDto, currentUser.getId());
 	}
-
-	@GetMapping("/{houseId}/event-categories")
-	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(@PathVariable Long houseId,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return eventCategoryService.getAllEventCategoryFromHouse(houseId, actingUserId);
-	}
-
-	@GetMapping("/{houseId}/events")
-	public List<GetEventByIdResponseDto> getEventsFromHouse(@PathVariable Long houseId,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return eventService.getEventsFromHouse(houseId, actingUserId);
-	}
-
-	@GetMapping("/{houseId}/house-needs")
-	public List<GetHouseNeedByIdResponseDto> getHouseNeedsFromHouse(@PathVariable Long houseId,
-			@RequestHeader("X-Acting-User-Id") Long actingUserId) {
-		return houseNeedService.getHouseNeedsFromHouse(houseId, actingUserId);
-	}
-	
-
 
 }

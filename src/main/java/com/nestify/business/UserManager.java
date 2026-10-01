@@ -13,11 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nestify.dataAccess.UserRepository;
 import com.nestify.dataTransferObject.request.SaveUserRequestDto;
 import com.nestify.dataTransferObject.request.UpdateUserRequestDto;
-import com.nestify.dataTransferObject.response.GetAllUserResponseDto;
 import com.nestify.dataTransferObject.response.GetHouseByIdResponseDto;
 import com.nestify.dataTransferObject.response.GetUserByIdResponseDto;
 import com.nestify.entities.House;
 import com.nestify.entities.User;
+import com.nestify.helpers.UserServiceHelper;
 import com.nestify.mapper.HouseMapper;
 import com.nestify.mapper.UserMapper;
 import com.nestify.policies.UserPolicy;
@@ -29,36 +29,35 @@ import lombok.AllArgsConstructor;
 public class UserManager implements UserService {
 
 	private final UserRepository userRepository;
+	private final UserServiceHelper userServiceHelper;
 	private final PasswordEncoder passwordEncoder;
 	private final UserMapper userMapper;
 	private final HouseMapper houseMapper;
 	private final UserPolicy userPolicy;
 
 	@Override
-	public Page<GetAllUserResponseDto> getUsers(Integer page, String sortDirection, Integer size, String sortBy) {
-
+	public Page<GetUserByIdResponseDto> getUsers(Integer page, String sortDirection, Integer size, String sortBy) {
+		
 		Sort sort = sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
 
-		Pageable paginationFilter = PageRequest.of(page, size, sort);
+		Pageable pageable = PageRequest.of(page, size, sort);
 
-		Page<User> userPage = userRepository.findAll(paginationFilter);
-
-		Page<GetAllUserResponseDto> responsePage = userPage.map(user -> userMapper.toGetAllUserResponseDto(user));
+		Page<GetUserByIdResponseDto> responsePage = userRepository.findAll(pageable).map(userMapper::toGetUserByIdResponseDto);
 
 		return responsePage;
 	}
 
 	@Override
 	public GetUserByIdResponseDto getUserById(Long id) {
-		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
-
+		User user = userServiceHelper.getUserOrThrow(id);
 		return userMapper.toGetUserByIdResponseDto(user);
 	}
 
 	@Override
 	public GetUserByIdResponseDto saveUser(SaveUserRequestDto userDto) {
-		String encodedPassword = passwordEncoder.encode(userDto.getPassword());
 		userPolicy.validateUserRegister(userDto);
+
+		String encodedPassword = passwordEncoder.encode(userDto.getPassword());
 		User user = new User();
 		user.setName(userDto.getName());
 		user.setEmail(userDto.getEmail());
@@ -69,7 +68,7 @@ public class UserManager implements UserService {
 
 	@Override
 	public GetUserByIdResponseDto updateUser(Long id, UpdateUserRequestDto userUpdateData) {
-		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+		User user = userServiceHelper.getUserOrThrow(id);
 		user.setName(userUpdateData.getName());
 		user.setEmail(userUpdateData.getEmail());
 
@@ -80,15 +79,14 @@ public class UserManager implements UserService {
 
 	@Override
 	public void deleteUser(Long id) {
-		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + id));
+		User user = userServiceHelper.getUserOrThrow(id);
 		userRepository.delete(user);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<GetHouseByIdResponseDto> getHousesOfUser(Long userId) {
-		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + userId));
+		User user = userServiceHelper.getUserOrThrow(userId);
 		List<GetHouseByIdResponseDto> houses = user.getHouseMemberships().stream().map(houseMember -> {
 			House house = houseMember.getHouse();
 			return houseMapper.toGetHouseByIdResponseDto(house);

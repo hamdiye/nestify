@@ -11,43 +11,24 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class EventCategoryServiceHelper {
-	private EventCategoryRepository eventCategoryRepository;
+	private final EventCategoryRepository eventCategoryRepository;
 	
-	/**
-	 * Retrieves an event category by its ID or throws an exception if not found.
-	 *
-	 * @param eventCategoryId the ID of the event category
-	 * @return the EventCategory entity
-	 */
 	public EventCategory getEventCategoryOrThrow(Long eventCategoryId) {
 		return eventCategoryRepository.findById(eventCategoryId)
 									  .orElseThrow(() -> new RuntimeException("Event category bulunamadı!"));
 	}
-
-	/**
-	 * Retrieves an existing default category for the given house, or creates and persists a new default category.
-	 *
-	 * @param house the house entity
-	 * @return default EventCategory
-	 */
+	
 	public EventCategory getOrCreateDefaultCategory(House house) {
-		if (house.getId() != null) {
-			return eventCategoryRepository.findFirstByHouseId(house.getId())
-					.orElseGet(() -> {
-						EventCategory defaultCategory = new EventCategory();
-						defaultCategory.setTitle("Genel");
-						defaultCategory.setDescription("Genel etkinlikler");
-						defaultCategory.setColorCode("#7C3AED");
-						defaultCategory.setHouse(house);
-						return eventCategoryRepository.save(defaultCategory);
-					});
-		}
-
-		EventCategory defaultCategory = new EventCategory();
-		defaultCategory.setTitle("Genel");
-		defaultCategory.setDescription("Genel etkinlikler");
-		defaultCategory.setColorCode("#7C3AED");
-		defaultCategory.setHouse(house);
-		return eventCategoryRepository.save(defaultCategory);
+	    return eventCategoryRepository.findFirstByHouseId(house.getId())
+	            .orElseGet(() -> createDefaultCategory(house));
+	}
+	
+	private EventCategory createDefaultCategory(House house) {
+	    EventCategory cat = new EventCategory();
+	    cat.setTitle("Genel");
+	    cat.setDescription("Genel etkinlikler");
+	    cat.setColorCode("#7C3AED");
+	    cat.setHouse(house);
+	    return eventCategoryRepository.save(cat);
 	}
 }

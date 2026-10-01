@@ -8,7 +8,7 @@ import com.nestify.entities.HouseNeed;
 @Component
 public class HouseNeedMapper {
 	public GetHouseNeedByIdResponseDto toGetHouseNeedByIdResponseDto(HouseNeed houseNeed) {
-		if(houseNeed == null) {
+		if(houseNeed == null){
 			return null;
 		}
 		
@@ -16,8 +16,8 @@ public class HouseNeedMapper {
 					houseNeed.getId(),
 					houseNeed.getTitle(),
 					houseNeed.getDescription(),
-					houseNeed.getCreatedBy().getId(),
-					houseNeed.getHouse().getId(),
+					houseNeed.getCreatedBy() != null ? houseNeed.getCreatedBy().getId() : null,
+					houseNeed.getHouse()     != null ? houseNeed.getHouse().getId()     : null,
 					houseNeed.getStatus()
 				);
 		

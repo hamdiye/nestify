@@ -21,7 +21,6 @@ import com.nestify.dataAccess.UserRepository;
 import com.nestify.dataTransferObject.request.SaveUserRequestDto;
 import com.nestify.dataTransferObject.response.GetUserByIdResponseDto;
 import com.nestify.entities.User;
-import com.nestify.mapper.HouseMapper;
 import com.nestify.mapper.UserMapper;
 import com.nestify.policies.UserPolicy;
 
@@ -33,8 +32,6 @@ public class UserServiceTest {
 	private PasswordEncoder passwordEncoder;
 	@Mock
 	private UserMapper userMapper;
-	@Mock
-	private HouseMapper houseMapper;
 	@Mock
 	private UserPolicy userPolicy;
 	@InjectMocks

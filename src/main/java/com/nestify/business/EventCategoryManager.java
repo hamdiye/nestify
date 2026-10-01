@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.nestify.dataAccess.EventCategoryRepository;
-import com.nestify.dataTransferObject.request.DeleteEventCategoryRequestDto;
 import com.nestify.dataTransferObject.request.SaveEventCategoryRequestDto;
 import com.nestify.dataTransferObject.request.UpdateEventCategoryRequestDto;
 import com.nestify.dataTransferObject.response.GetEventCategoryResponseDto;
@@ -28,37 +27,31 @@ public class EventCategoryManager implements EventCategoryService {
 	private final EventCategoryMapper eventCategoryMapper;
 	private final EventCategoryServiceHelper eventCategoryHelper;
 
-	/**
-	 * Retrieves all event categories for a house. If no categories exist, a default category is created.
-	 *
-	 * @param houseId ID of the house
-	 * @param actingUserId ID of the user requesting the categories
-	 * @return list of event category response DTOs
-	 */
 	@Override
 	@Transactional
 	public List<GetEventCategoryResponseDto> getAllEventCategoryFromHouse(Long houseId, Long actingUserId) {
 		House house = houseHelper.getHouseOrThrow(houseId);
-		eventCategoryPolicy.validateEventCategory(house, actingUserId);
+		eventCategoryPolicy.validateEventCategoryOperation(house, actingUserId);
 
-		if (house.getEventCategories() == null || house.getEventCategories().isEmpty()) {
+		List<EventCategory> categories = eventCategoryRepository.findByHouseId(houseId);
+
+		if (categories.isEmpty()) {
 			EventCategory defaultCat = eventCategoryHelper.getOrCreateDefaultCategory(house);
-			house.getEventCategories().add(defaultCat);
+			categories = List.of(defaultCat);
 		}
 
-		List<GetEventCategoryResponseDto> eventCategories = house.getEventCategories()
-				.stream()
-				.map(eventCategory -> eventCategoryMapper.toGetEventCategoryResponseDto(eventCategory))
-				.toList();
+		List<GetEventCategoryResponseDto> eventCategories = categories.stream()
+														              .map(eventCategoryMapper::toGetEventCategoryResponseDto)
+														              .toList();
 		return eventCategories;
 	}
 
 	@Override
-	public GetEventCategoryResponseDto addEventCategory(SaveEventCategoryRequestDto eventCategoryDto) {
-		House house = houseHelper.getHouseOrThrow(eventCategoryDto.getHouseId());
-
-		eventCategoryPolicy.validateEventCategory(house, eventCategoryDto.getUserId());
-
+	public GetEventCategoryResponseDto addEventCategory(Long houseId, Long actingUserId, SaveEventCategoryRequestDto eventCategoryDto) {
+		House house = houseHelper.getHouseOrThrow(houseId);
+		eventCategoryPolicy.validateEventCategoryOperation(house, eventCategoryDto.getUserId());
+		eventCategoryPolicy.validateEventCategoryOperation(house, actingUserId);
+		
 		EventCategory eventCategory = new EventCategory();
 		eventCategory.setTitle(eventCategoryDto.getTitle());
 		eventCategory.setDescription(eventCategoryDto.getDescription());
@@ -71,12 +64,15 @@ public class EventCategoryManager implements EventCategoryService {
 	}
 
 	@Override
-	public GetEventCategoryResponseDto updateEventCategory(UpdateEventCategoryRequestDto updateCategoryDto) {
-		House house = houseHelper.getHouseOrThrow(updateCategoryDto.getHouseId());
+	public GetEventCategoryResponseDto updateEventCategory(Long houseId, Long eventCategoryId, Long actingUserId, UpdateEventCategoryRequestDto updateCategoryDto) {
 		EventCategory eventCategory = eventCategoryHelper
-				.getEventCategoryOrThrow(updateCategoryDto.getEventCategoryId());
+				.getEventCategoryOrThrow(eventCategoryId);
+		eventCategoryPolicy.validateEventCategoryBelogsToHouse(eventCategory, houseId);
 
-		eventCategoryPolicy.validateEventCategory(house, updateCategoryDto.getUserId());
+		House house = houseHelper.getHouseOrThrow(houseId);
+		eventCategoryPolicy.validateEventCategoryOperation(house, actingUserId);
+		eventCategoryPolicy.validateEventCategoryOperation(house, updateCategoryDto.getUserId());
+
 
 		eventCategory.setTitle(updateCategoryDto.getTitle());
 		eventCategory.setDescription(updateCategoryDto.getDescription());
@@ -89,11 +85,15 @@ public class EventCategoryManager implements EventCategoryService {
 	}
 
 	@Override
-	@org.springframework.transaction.annotation.Transactional
-	public void deleteEventCategory(DeleteEventCategoryRequestDto deleteEventDto) {
-		House house = houseHelper.getHouseOrThrow(deleteEventDto.getHouseId());
-		eventCategoryPolicy.validateEventCategory(house, deleteEventDto.getActingUserId());
-		EventCategory eventCategory = eventCategoryHelper.getEventCategoryOrThrow(deleteEventDto.getCategoryId());
+	@Transactional
+	public void deleteEventCategory(Long houseId, Long eventCategoryId, Long actingUserId) {
+		EventCategory eventCategory = eventCategoryHelper
+				.getEventCategoryOrThrow(eventCategoryId);
+		eventCategoryPolicy.validateEventCategoryBelogsToHouse(eventCategory, houseId);
+		
+		House house = houseHelper.getHouseOrThrow(houseId);
+		eventCategoryPolicy.validateEventCategoryOperation(house, actingUserId);
+		
 		eventCategoryRepository.delete(eventCategory);
 	}
 

@@ -12,29 +12,33 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class HouseServiceHelper {
 	private final HouseRepository houseRepository;
-	
+
     public House getHouseOrThrow(Long houseId) {
-    	return houseRepository.findById(houseId)
+    		return houseRepository.findById(houseId)
 				.orElseThrow(() -> new RuntimeException("Ev bulunamadı: " + houseId));
     }
-    
+
     public House getHouseOrThrowByInviteCode(String inviteCode) {
-    	return houseRepository.findByInviteCode(inviteCode)
+    		return houseRepository.findByInviteCode(inviteCode)
 				.orElseThrow(() -> new RuntimeException("Ev bulunamadı: " + inviteCode));
     }
-    
+
     public HouseMember getHouseMember(House house, Long userId) {
-    	return house.getMembers().stream().filter(m -> m.getUser().getId().equals(userId))
+    		return house.getMembers().stream().filter(m -> m.getUser().getId().equals(userId))
 										  .findFirst()
 										  .orElseThrow(() -> new RuntimeException("Kullanıcı bu evin üyesi değil!"));
     }
-    
-    public boolean validateUserNotMember(House house, Long userId) {
-    	return !house.getMembers().stream().anyMatch(member -> member.getUser().getId().equals(userId));
-    }
-    
-    public int getHouseMemberSize(House house) {
-    	return house.getMembers().size();
+
+    public boolean isNotMember(House house, Long userId) {
+    		return !house.getMembers().stream().anyMatch(member -> member.getUser().getId().equals(userId));
     }
 
+    public int getHouseMemberSize(House house) {
+    		return house.getMembers().size();
+    }
+
+    public House getHouseWithMembersOrThrow(Long houseId) {
+    		return houseRepository.findByIdWithMembers(houseId)
+                .orElseThrow(() -> new RuntimeException("Ev bulunamadı: " + houseId));
+    }
 }

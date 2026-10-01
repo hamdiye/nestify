@@ -1,8 +1,13 @@
 package com.nestify.entities;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.nestify.entities.enums.NeedStatus;
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.nestify.entities.enums.TransactionCategory;
+import com.nestify.entities.enums.TransactionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,34 +28,42 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "house_needs")
+@Table(name = "transactions")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class HouseNeed {
+public class Transaction {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "title", nullable = false)
+	@Column(name = "title")
 	private String title;
 	
-	@Column(name = "description")
-	private String description;
+	@Column(nullable = false, precision = 12, scale = 2)
+	private BigDecimal amount;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private TransactionType type;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private TransactionCategory category;
+	
+	@Column(nullable = false)
+	private LocalDate transactionDate;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "created_by", nullable = false)
-	private User createdBy;
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "house_id", nullable = false)
 	private House house;
 	
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private NeedStatus status = NeedStatus.PENDING;
-	@Column(name = "createdAt")
+	@CreationTimestamp
 	private LocalDateTime createdAt;
 	
 	@Column(name = "updatedAt")

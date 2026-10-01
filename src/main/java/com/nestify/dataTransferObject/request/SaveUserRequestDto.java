@@ -22,19 +22,19 @@ public class SaveUserRequestDto {
 	private String name;
 	
 	@NotBlank(message = "E-posta alanı boş bırakılamaz.")
-    @Email(message = "Lütfen geçerli bir e-posta adresi giriniz.")
+	@Email(message = "Lütfen geçerli bir e-posta adresi giriniz.")
 	private String email;
 	
 	@NotBlank(message = "Şifre boş bırakılamaz.")
-    @Size(min = 6, message = "Şifre en az 6 karakter olmalıdır.")
+	@Size(min = 6, message = "Şifre en az 6 karakter olmalıdır.")
 	private String password;
 	
 	@NotBlank(message = "Şifre tekrarı boş bırakılamaz.")
-    private String confirmPassword;
+	private String confirmPassword;
 	
 	@JsonIgnore
-    @AssertTrue(message = "Girdiğiniz şifreler birbiriyle eşleşmiyor.")
-    public boolean isPasswordConfirmed() {
+	@AssertTrue(message = "Girdiğiniz şifreler birbiriyle eşleşmiyor.")
+	public boolean isPasswordConfirmed() {
         if (password == null || confirmPassword == null) {
             return true; // @NotBlank anotasyonları zaten null/boş kontrolünü yakalar
         }
