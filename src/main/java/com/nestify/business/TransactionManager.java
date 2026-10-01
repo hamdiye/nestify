@@ -20,7 +20,7 @@ import com.nestify.policies.TransactionPolicy;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-@Service
+@Service("nestifyTransactionManager")
 public class TransactionManager implements TransactionService {
 
 	private final TransactionRepository transactionRepository;
@@ -31,7 +31,8 @@ public class TransactionManager implements TransactionService {
 	private final TransactionPolicy transactionPolicy;
 
 	@Override
-	public GetTransactionByIdResponseDto addTransaction(Long houseId, Long actingUserId, SaveTransactionRequestDto transactionDto) {
+	public GetTransactionByIdResponseDto addTransaction(Long houseId, Long actingUserId,
+			SaveTransactionRequestDto transactionDto) {
 		User user = userServiceHelper.getUserOrThrow(transactionDto.getUserId());
 		House house = houseServiceHelper.getHouseOrThrow(houseId);
 		transactionPolicy.validateTransactionOperation(house, user.getId());
@@ -57,12 +58,12 @@ public class TransactionManager implements TransactionService {
 			UpdateTransactionRequestDto transactionDto) {
 		Transaction transaction = transactionServiceHelper.getTransactionOrThrow(transactionId);
 		transactionPolicy.validateTransactionBelogsToHouse(transaction, houseId);
-		
+
 		House house = houseServiceHelper.getHouseOrThrow(houseId);
 		User user = userServiceHelper.getUserOrThrow(transactionDto.getUserId());
 		transactionPolicy.validateTransactionOperation(house, transactionDto.getUserId());
 		transactionPolicy.validateTransactionOperation(house, actingUserId);
-		
+
 		transaction.setTitle(transactionDto.getTitle());
 		transaction.setAmount(transactionDto.getAmount());
 		transaction.setCategory(transactionDto.getCategory());
@@ -86,10 +87,10 @@ public class TransactionManager implements TransactionService {
 	public void deleteTransaction(Long houseId, Long transactionId, Long actingUserId) {
 		House house = houseServiceHelper.getHouseOrThrow(houseId);
 		transactionPolicy.validateTransactionOperation(house, actingUserId);
-		
+
 		Transaction transaction = transactionServiceHelper.getTransactionOrThrow(transactionId);
 		transactionPolicy.validateTransactionBelogsToHouse(transaction, houseId);
-		
+
 		transactionRepository.delete(transaction);
 	}
 
